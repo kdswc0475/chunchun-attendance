@@ -130,14 +130,29 @@ body{padding-bottom:calc(var(--nav) + env(safe-area-inset-bottom) + 4px);overflo
 .scan-status.wait{background:var(--warn-bg);color:var(--warn)}
 .scan-status.live{background:#E8F5E9;color:var(--g2)}
 
-/* QR 리더 커스텀 */
-#qr-reader{border-radius:var(--r2);overflow:hidden;width:100%!important}
-#qr-reader video{width:100%!important;height:auto!important;object-fit:cover}
-#qr-reader canvas{width:100%!important;height:auto!important}
+/* QR 리더 커스텀 - 항상 정중앙 고정 */
+#qr-reader{border-radius:var(--r2);overflow:hidden;width:100%!important;
+           max-width:340px;margin:0 auto}  /* 중앙 정렬 */
+#qr-reader video{width:100%!important;height:auto!important;
+                 object-fit:cover;display:block}
+#qr-reader canvas{width:100%!important;height:auto!important;
+                  position:absolute;top:0;left:0}
 #qr-reader__dashboard_section_swaplink,
 #qr-reader__scan_region img{display:none!important}
 #html5-qrcode-button-camera-stop,
 #html5-qrcode-button-camera-start{display:none!important}
+/* 스캔 박스 테두리 강조 */
+#qr-reader__scan_region{position:relative}
+#qr-reader__scan_region::after{
+  content:'';position:absolute;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:250px;height:250px;
+  border:3px solid var(--g3);
+  border-radius:12px;
+  pointer-events:none;
+  box-shadow:0 0 0 9999px rgba(0,0,0,0.35)
+}
 
 .cam-btns{display:flex;gap:8px;align-items:center;margin-top:10px}
 
@@ -937,14 +952,16 @@ function startScan() {
   document.getElementById('btnStop').classList.remove('hidden');
 
   scanner = new Html5Qrcode('qr-reader');
-  var isLand = window.innerWidth > window.innerHeight;
 
+  // qrbox: 항상 정사각형 고정 크기로 정중앙에 위치
+  // aspectRatio 고정으로 스캔 후 카메라 뷰 흔들림 방지
   scanner.start(
     { facingMode: camFacing },
     {
       fps: 10,
-      qrbox: function (w, h) { var s = Math.floor(Math.min(w, h) * 0.7); return { width: s, height: s }; },
-      aspectRatio: isLand ? 16/9 : 4/3
+      qrbox: { width: 250, height: 250 },  // 고정 크기 → 항상 중앙
+      aspectRatio: 1.0,                     // 정사각형 뷰 → 위치 고정
+      disableFlip: false
     },
     onQR,
     function () {}
@@ -983,7 +1000,8 @@ async function onQR(text) {
   var cdBar = document.getElementById('cooldownBar');
   cdBar.classList.add('show');
 
-  try { if (scanner) scanner.pause(); } catch(e) {}
+  // ★ 카메라는 절대 멈추지 않음 → 위치 흔들림 방지
+  // pause/resume 제거, 오버레이로만 시각적 피드백
 
   try {
     const r = await api('markAttendance', { qrId: text.trim(), subjectName: scanSubj });
@@ -1003,11 +1021,12 @@ async function onQR(text) {
     speak('확인이 필요합니다');
   }
 
+  // 2.5초 후 오버레이 닫기, 쿨다운 해제 (카메라는 그대로 유지)
   setTimeout(function () {
     hideOverlay();
     cooldown = false;
     cdBar.classList.remove('show');
-    try { if (scanner && isScanning) scanner.resume(); } catch(e) {}
+    // ★ scanner.resume() 호출 안 함 → 카메라 위치 변경 없음
   }, 2500);
 }
 
