@@ -1924,19 +1924,36 @@
       if (!list.length) { alert('인쇄할 어르신이 없습니다.'); return; }
 
       var win = window.open('', '_blank');
+      var now = new Date();
+      var dateStr = now.getFullYear() + '. ' + (now.getMonth() + 1) + '. ' + now.getDate() + '.';
+
       var html = '<html><head><title>어르신 QR코드 인쇄</title>'
         + '<style>'
-        + '@page { size: A4; margin: 10mm; }'
-        + 'body { font-family: sans-serif; margin: 0; padding: 0; }'
-        + '.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; }'
-        + '.qc { border: 1px dashed #ccc; padding: 5mm 3mm; text-align: center; page-break-inside: avoid; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 62mm; }'
-        + '.nm { font-size: 14pt; font-weight: bold; margin-bottom: 2mm; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; width: 100%; }'
-        + '.id { font-size: 10pt; color: #666; margin-bottom: 3mm; }'
-        + '.qi { width: 40mm; height: 40mm; }'
-        + '</style></head><body><div class="grid">'
+        + '@page { size: A4; margin: 15mm 10mm; }'
+        + 'body { font-family: "Noto Sans KR", sans-serif; margin: 0; padding: 0; color: #333; }'
+        + '.hdr { text-align: center; margin-bottom: 8mm; }'
+        + '.hdr-title { font-size: 14pt; font-weight: bold; margin-bottom: 2mm; display: flex; align-items: center; justify-content: center; gap: 6px; }'
+        + '.hdr-info { font-size: 10pt; color: #666; }'
+        + 'hr { border: 0; border-top: 1px solid #1b5e20; margin: 4mm 0 8mm 0; }'
+        + '.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8mm 6mm; }'
+        + '.qc { border: 1px solid #e0e0e0; background: #fcfcfc; border-radius: 12px; padding: 6mm 4mm; text-align: center; page-break-inside: avoid; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 75mm; box-sizing: border-box; }'
+        + '.qi { width: 45mm; height: 45mm; margin-bottom: 5mm; }'
+        + '.nm { font-size: 13pt; font-weight: bold; margin-bottom: 1.5mm; color: #000; }'
+        + '.id { font-size: 9pt; color: #777; margin-bottom: 1mm; }'
+        + '.sj { font-size: 9pt; color: #888; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; }'
+        + '</style></head><body>'
+        + '<div class="hdr">'
+        + '<div class="hdr-title">🎓 노인대학 출석 QR코드</div>'
+        + '<div class="hdr-info">' + dateStr + ' | 총 ' + list.length + '명</div>'
+        + '</div><hr>'
+        + '<div class="grid">'
         + list.map(function (s) {
-          return '<div class="qc"><div class="nm">' + s.name + '</div><div class="id">' + s.id + '</div>'
-            + '<img src="' + s.qrCode + '" class="qi"></div>';
+          return '<div class="qc">'
+            + '<img src="' + s.qrCode + '" class="qi">'
+            + '<div class="nm">' + s.name + '</div>'
+            + '<div class="id">' + s.id + '</div>'
+            + '<div class="sj">' + s.subjects.join(', ') + '</div>'
+            + '</div>';
         }).join('')
         + '</div><script>window.onload=function(){setTimeout(function(){window.print();},500);};<\/script></body></html>';
 
