@@ -501,28 +501,67 @@
     #qr-reader {
       border-radius: var(--r2);
       overflow: hidden;
-      width: 100% !important
+      width: 100% !important;
+      border: 2px solid var(--g3) !important;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      position: relative;
+      background: #000;
+      min-height: 350px;
+      /* 크기 확대 */
     }
 
     #qr-reader video {
       width: 100% !important;
       height: auto !important;
-      object-fit: cover
+      object-fit: cover;
     }
 
     #qr-reader canvas {
       width: 100% !important;
-      height: auto !important
+      height: auto !important;
+    }
+
+    /* 스캔 레이저 라인 애니메이션 */
+    #qr-reader::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, var(--g5), transparent);
+      box-shadow: 0 0 10px var(--g5);
+      z-index: 10;
+      animation: scanning 2.5s infinite linear;
+      display: none;
+    }
+
+    #qr-reader:not(.hidden)::after {
+      display: block;
+    }
+
+    @keyframes scanning {
+      0% {
+        top: 0;
+      }
+
+      50% {
+        top: 100%;
+      }
+
+      100% {
+        top: 0;
+      }
     }
 
     #qr-reader__dashboard_section_swaplink,
     #qr-reader__scan_region img {
-      display: none !important
+      display: none !important;
     }
 
     #html5-qrcode-button-camera-stop,
     #html5-qrcode-button-camera-start {
-      display: none !important
+      display: none !important;
     }
 
     .cam-btns {
@@ -1701,9 +1740,14 @@
       scanner.start(
         { facingMode: camFacing },
         {
-          fps: 10,
-          qrbox: function (w, h) { var s = Math.floor(Math.min(w, h) * 0.7); return { width: s, height: s }; },
-          aspectRatio: isLand ? 16 / 9 : 4 / 3
+          fps: 20, // 스캔 속도 향상
+          qrbox: function (w, h) { var s = Math.floor(Math.min(w, h) * 0.8); return { width: s, height: s }; },
+          aspectRatio: isLand ? 16 / 9 : 4 / 3,
+          videoConstraints: {
+            facingMode: camFacing,
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720, max: 1080 }
+          }
         },
         onQR,
         function () { }
