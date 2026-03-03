@@ -1938,9 +1938,9 @@
         + '.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8mm 6mm; }'
         + '.qc { border: 1px solid #e0e0e0; background: #fcfcfc; border-radius: 12px; padding: 6mm 4mm; text-align: center; page-break-inside: avoid; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 75mm; box-sizing: border-box; }'
         + '.qi { width: 45mm; height: 45mm; margin-bottom: 5mm; }'
-        + '.nm { font-size: 13pt; font-weight: bold; margin-bottom: 1.5mm; color: #000; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; }'
-        + '.id { font-size: 9pt; color: #777; margin-bottom: 1mm; }'
-        + '.sj { font-size: 9pt; color: #888; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; width: 100%; }'
+        + '.nm { font-size: 12pt; font-weight: bold; margin-bottom: 1mm; color: #000; overflow: hidden; width: 100%; line-height: 1.2; }'
+        + '.id { font-size: 9pt; color: #777; margin-bottom: 0.5mm; }'
+        + '.sj { font-size: 8pt; color: #888; overflow: hidden; width: 100%; line-height: 1.2; }'
         + '</style></head><body>'
         + '<div class="hdr">'
         + '<div class="hdr-title">🎓 노인대학 출석 QR코드</div>'
@@ -1962,13 +1962,31 @@
     }
     function dlQR() {
       if (!qrInfo) return;
-      var u = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=' + encodeURIComponent(qrInfo.id);
-      fetch(u).then(function (r) { return r.blob(); }).then(function (b) {
+      var apiOuter = 'https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=' + encodeURIComponent(qrInfo.id);
+
+      var img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        var ctx = canvas.getContext('2d');
+        // JPG는 투명도를 지원하지 않으므로 배경을 흰색으로 채움
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         var a = document.createElement('a');
-        a.href = URL.createObjectURL(b);
-        a.download = 'QR_' + qrInfo.id + '_' + qrInfo.name + '.png';
+        a.href = dataUrl;
+        a.download = 'QR_' + qrInfo.id + '_' + qrInfo.name + '.jpg';
         a.click();
-      }).catch(function () { window.open(u, '_blank'); });
+      };
+      img.onerror = function () {
+        // 캔버스 변환 실패 시 원본 링크 오픈 (fallback)
+        window.open(apiOuter, '_blank');
+      };
+      img.src = apiOuter;
     }
 
     // ════════════════════════════════════════
