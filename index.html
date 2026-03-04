@@ -1,2540 +1,725 @@
-<!DOCTYPE html>
-<html lang="ko">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-    content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-  <title>청춘캠퍼스 출석관리</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent
-    }
-
-    :root {
-      --g1: #1B5E20;
-      --g2: #2E7D32;
-      --g3: #388E3C;
-      --g4: #43A047;
-      --g5: #66BB6A;
-      --bg: #F1F8F1;
-      --card: #fff;
-      --border: #D7EDD7;
-      --text: #1A2B1A;
-      --text2: #5A7A5A;
-      --text3: #8FA88F;
-      --danger: #B71C1C;
-      --danger-bg: #FFEBEE;
-      --warn: #E65100;
-      --warn-bg: #FFF3E0;
-      --shadow: 0 2px 12px rgba(46, 125, 50, 0.10);
-      --r: 14px;
-      --r2: 10px;
-      --r3: 8px;
-      --nav: 68px;
-    }
-
-    html,
-    body {
-      height: 100%;
-      font-family: 'Noto Sans KR', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5
-    }
-
-    body {
-      padding-bottom: calc(var(--nav) + env(safe-area-inset-bottom) + 4px);
-      overflow-x: hidden
-    }
-
-    /* ── 헤더 ── */
-    .hdr {
-      background: var(--g2);
-      color: #fff;
-      padding: 13px 18px;
-      position: sticky;
-      top: 0;
-      z-index: 90;
-      box-shadow: 0 4px 24px rgba(46, 125, 50, 0.16)
-    }
-
-    .hdr-inner {
-      max-width: 900px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between
-    }
-
-    .hdr-title {
-      font-size: 16px;
-      font-weight: 900;
-      display: flex;
-      align-items: center;
-      gap: 7px
-    }
-
-    .hdr-badge {
-      font-size: 10px;
-      background: rgba(255, 255, 255, 0.22);
-      padding: 3px 9px;
-      border-radius: 20px;
-      font-weight: 500
-    }
-
-    /* ── 하단 네비 ── */
-    .nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 90;
-      height: calc(var(--nav) + env(safe-area-inset-bottom));
-      background: #fff;
-      border-top: 1.5px solid var(--border);
-      display: flex;
-      align-items: flex-start;
-      padding-top: 4px;
-      padding-bottom: env(safe-area-inset-bottom);
-      box-shadow: 0 -2px 12px rgba(46, 125, 50, 0.08)
-    }
-
-    .nav-btn {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      border: none;
-      background: none;
-      padding: 6px 4px;
-      cursor: pointer;
-      font-family: inherit;
-      color: var(--text3)
-    }
-
-    .nav-icon {
-      font-size: 1.45rem;
-      line-height: 1;
-      padding: 4px 12px;
-      border-radius: 10px;
-      transition: all .18s
-    }
-
-    .nav-label {
-      font-size: 10px;
-      font-weight: 700;
-      transition: color .18s
-    }
-
-    .nav-btn.active {
-      color: var(--g2)
-    }
-
-    .nav-btn.active .nav-icon {
-      background: var(--bg);
-      color: var(--g2)
-    }
-
-    /* ── 컨텐츠 ── */
-    .wrap {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 14px 13px
-    }
-
-    .tab {
-      display: none
-    }
-
-    .tab.on {
-      display: block
-    }
-
-    /* ── 카드 ── */
-    .card {
-      background: var(--card);
-      border-radius: var(--r);
-      padding: 16px;
-      margin-bottom: 13px;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow)
-    }
-
-    .card-ttl {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--g2);
-      margin-bottom: 13px;
-      display: flex;
-      align-items: center;
-      gap: 6px
-    }
-
-    /* ── 통계 ── */
-    .stat-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 13px
-    }
-
-    .stat {
-      border-radius: var(--r);
-      padding: 14px 16px;
-      text-align: center
-    }
-
-    .stat-g {
-      background: linear-gradient(135deg, var(--g2), var(--g4));
-      color: #fff
-    }
-
-    .stat-b {
-      background: linear-gradient(135deg, #1565C0, #42A5F5);
-      color: #fff
-    }
-
-    .stat-o {
-      background: linear-gradient(135deg, var(--warn), #FFA000);
-      color: #fff
-    }
-
-    .stat-lbl {
-      font-size: 11px;
-      opacity: .85;
-      margin-bottom: 2px;
-      font-weight: 500
-    }
-
-    .stat-val {
-      font-size: 28px;
-      font-weight: 900;
-      line-height: 1
-    }
-
-    /* ── 폼 ── */
-    .fg {
-      margin-bottom: 11px
-    }
-
-    .fl {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text2);
-      margin-bottom: 4px
-    }
-
-    .req {
-      color: var(--danger)
-    }
-
-    .fi {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--r3);
-      font-size: 14px;
-      font-family: inherit;
-      background: #fff;
-      color: var(--text);
-      transition: border-color .15s
-    }
-
-    .fi:focus {
-      outline: none;
-      border-color: var(--g3)
-    }
-
-    .fr {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px
-    }
-
-    /* ── 버튼 ── */
-    .btn {
-      padding: 11px 16px;
-      border: none;
-      border-radius: var(--r3);
-      font-size: 13px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      font-family: inherit;
-      transition: opacity .15s, transform .1s
-    }
-
-    .btn:active {
-      opacity: .82;
-      transform: scale(.98)
-    }
-
-    .btn:disabled {
-      opacity: .45;
-      cursor: not-allowed
-    }
-
-    .btn-p {
-      background: var(--g2);
-      color: #fff
-    }
-
-    .btn-b {
-      background: #1565C0;
-      color: #fff
-    }
-
-    .btn-d {
-      background: var(--danger);
-      color: #fff
-    }
-
-    .btn-o {
-      background: #fff;
-      border: 1.5px solid var(--g3);
-      color: var(--g2)
-    }
-
-    .btn-od {
-      background: #fff;
-      border: 1.5px solid var(--danger);
-      color: var(--danger)
-    }
-
-    .btn-w {
-      width: 100%
-    }
-
-    .btn-sm {
-      padding: 6px 10px;
-      font-size: 11px
-    }
-
-    .btn-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px
-    }
-
-    .btn-row .btn {
-      flex: 1
-    }
-
-    /* ── 토글 ── */
-    .tgl-grp {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px
-    }
-
-    .tgl {
-      padding: 7px 12px;
-      border: 1.5px solid var(--border);
-      background: #fff;
-      color: var(--text2);
-      font-size: 12px;
-      cursor: pointer;
-      border-radius: var(--r3);
-      font-family: inherit;
-      font-weight: 500;
-      transition: all .15s
-    }
-
-    .tgl.on {
-      background: var(--g2);
-      border-color: var(--g2);
-      color: #fff;
-      font-weight: 700
-    }
-
-    /* ── 배지 ── */
-    .bdg {
-      padding: 3px 9px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 700;
-      display: inline-block
-    }
-
-    .bdg-g {
-      background: #E8F5E9;
-      color: var(--g2)
-    }
-
-    .bdg-gr {
-      background: #F5F5F5;
-      color: #757575
-    }
-
-    /* ── 알림 ── */
-    .al {
-      padding: 10px 13px;
-      border-radius: var(--r3);
-      margin-bottom: 11px;
-      font-size: 12px;
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-      line-height: 1.5
-    }
-
-    .al-i {
-      background: #E3F2FD;
-      border-left: 3px solid #1565C0
-    }
-
-    .al-w {
-      background: var(--warn-bg);
-      border-left: 3px solid var(--warn)
-    }
-
-    .al-s {
-      background: #E8F5E9;
-      border-left: 3px solid var(--g3)
-    }
-
-    /* ══ API 설정 배너 ══ */
-    .api-banner {
-      background: linear-gradient(135deg, #E65100, #FF8F00);
-      color: #fff;
-      border-radius: var(--r);
-      padding: 14px 16px;
-      margin-bottom: 13px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px
-    }
-
-    .api-banner-icon {
-      font-size: 1.5rem;
-      flex-shrink: 0
-    }
-
-    .api-banner-text {
-      font-size: 12px;
-      line-height: 1.6
-    }
-
-    .api-banner-text strong {
-      font-size: 13px;
-      display: block;
-      margin-bottom: 3px
-    }
-
-    .api-input {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: var(--r3);
-      border: none;
-      font-size: 12px;
-      font-family: inherit;
-      margin-top: 6px;
-      background: rgba(255, 255, 255, 0.9)
-    }
-
-    /* ══ 스캔 탭 ══ */
-    .subj-sel {
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: var(--r);
-      padding: 14px;
-      margin-bottom: 13px
-    }
-
-    .subj-sel label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--g1);
-      display: block;
-      margin-bottom: 7px
-    }
-
-    .subj-sel select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1.5px solid var(--g3);
-      border-radius: var(--r3);
-      font-size: 14px;
-      font-family: inherit;
-      background: #fff;
-      color: var(--text)
-    }
-
-    .subj-sel select:focus {
-      outline: none
-    }
-
-    .scan-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 13px;
-      border-radius: var(--r3);
-      margin-bottom: 11px;
-      font-size: 13px;
-      font-weight: 700
-    }
-
-    .scan-status.wait {
-      background: var(--warn-bg);
-      color: var(--warn)
-    }
-
-    .scan-status.live {
-      background: #E8F5E9;
-      color: var(--g2)
-    }
-
-    /* QR 리더 커스텀 */
-    #qr-reader {
-      border-radius: var(--r2);
-      overflow: hidden;
-      width: 100% !important;
-      border: 2px solid var(--g3) !important;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      position: relative;
-      background: #000;
-      min-height: 350px;
-      /* 크기 확대 */
-    }
-
-    #qr-reader video {
-      width: 100% !important;
-      height: auto !important;
-      object-fit: cover;
-    }
-
-    #qr-reader canvas {
-      width: 100% !important;
-      height: auto !important;
-    }
-
-    /* 스캔 레이저 라인 애니메이션 */
-    #qr-reader::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 2px;
-      background: linear-gradient(to right, transparent, var(--g5), transparent);
-      box-shadow: 0 0 10px var(--g5);
-      z-index: 10;
-      animation: scanning 2.5s infinite linear;
-      display: none;
-    }
-
-    #qr-reader:not(.hidden)::after {
-      display: block;
-    }
-
-    @keyframes scanning {
-      0% {
-        top: 0;
+/**
+ * 청춘캠퍼스 출석관리 시스템
+ * 강동종합사회복지관 노인대학
+ * GitHub Pages + Apps Script API 방식
+ */
+
+// ============================================================
+// 설정
+// ============================================================
+const SPREADSHEET_ID = '1I5AbSuquBK_ThRk2E6lqLccvXmv2Eh40XzztwMTWtgg';
+
+const SHEET = {
+  SENIORS:    '어르신목록',
+  SUBJECTS:   '과목관리',
+  ATTENDANCE: '출석기록'
+};
+
+const HDR_SENIORS    = ['ID','이름','성별','연락처','거주지','수강과목','비상연락처','비상연락처관계','활동현황','등록일자'];
+const HDR_SUBJECTS   = ['과목ID','과목명','요일','사용여부'];
+const HDR_ATTENDANCE = ['날짜','과목명','어르신ID','어르신이름'];
+
+const STATUS_ACTIVE   = '활성';
+const STATUS_INACTIVE = '비활성';
+const STATUS_USING    = '사용';
+
+const DEFAULT_SUBJECTS = [
+  { name:'한글교실 (초급1)',  day:'수,금' },
+  { name:'한글교실 (초급2)',  day:'수,금' },
+  { name:'한글교실 (상급)',   day:'월,수,금' },
+  { name:'디지털교육 (초급)', day:'목' },
+  { name:'디지털교육 (중급)', day:'목' },
+  { name:'영어교실 (초급)',   day:'화' },
+  { name:'영어교실 (중급)',   day:'목' },
+  { name:'실버요가 1',        day:'화' },
+  { name:'실버요가 2',        day:'금' },
+  { name:'맷돌체조',          day:'목' },
+  { name:'노래교실',          day:'금' }
+];
+
+// ============================================================
+// 헬퍼
+// ============================================================
+function _ss()    { return SpreadsheetApp.openById(SPREADSHEET_ID); }
+function _tz()    { return Session.getScriptTimeZone(); }
+function _today() { return Utilities.formatDate(new Date(), _tz(), 'yyyy-MM-dd'); }
+
+function _sheet(name) {
+  const s = _ss().getSheetByName(name);
+  if (!s) throw new Error('시트 없음: ' + name);
+  return s;
+}
+
+function _fmtDate(v) {
+  if (!v) return '';
+  if (v instanceof Date) return Utilities.formatDate(v, _tz(), 'yyyy-MM-dd');
+  return String(v).slice(0, 10);
+}
+
+function _fmtTime(v) {
+  if (!v || !(v instanceof Date)) return '';
+  return Utilities.formatDate(v, _tz(), 'HH:mm');
+}
+
+function _parseDays(str) {
+  const map = { '일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6 };
+  return (str||'').replace(/\s/g,'').split(/[,，]/)
+    .map(p => map[p]).filter(n => n !== undefined);
+}
+
+function _datesInMonth(year, month, dayNums) {
+  const result = [];
+  for (let d = new Date(year, month-1, 1); d <= new Date(year, month, 0); d.setDate(d.getDate()+1)) {
+    if (dayNums.includes(d.getDay())) result.push(new Date(d.getTime()));
+  }
+  return result;
+}
+
+function _qrUrl(id) {
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='
+    + encodeURIComponent(id) + '&format=png';
+}
+
+function _newId() {
+  const s  = _sheet(SHEET.SENIORS);
+  const lr = s.getLastRow();
+  if (lr < 2) return 'S001';
+  const last = String(s.getRange(lr, 1).getValue()).replace(/\D/g,'') || '0';
+  return 'S' + String(parseInt(last, 10) + 1).padStart(3, '0');
+}
+
+// ============================================================
+// CORS 응답 헬퍼
+// ============================================================
+function _ok(data) {
+  const output = ContentService
+    .createTextOutput(JSON.stringify({ success: true, ...data }))
+    .setMimeType(ContentService.MimeType.JSON);
+  return output;
+}
+
+function _err(msg) {
+  const output = ContentService
+    .createTextOutput(JSON.stringify({ success: false, message: msg }))
+    .setMimeType(ContentService.MimeType.JSON);
+  return output;
+}
+
+// ============================================================
+// 초기 설정
+// ============================================================
+function initialSetup() {
+  try {
+    const ss = _ss();
+    const defs = [
+      { name: SHEET.SENIORS,    headers: HDR_SENIORS },
+      { name: SHEET.SUBJECTS,   headers: HDR_SUBJECTS },
+      { name: SHEET.ATTENDANCE, headers: HDR_ATTENDANCE }
+    ];
+    let needSeed = false;
+    defs.forEach(def => {
+      if (!ss.getSheetByName(def.name)) {
+        const s = ss.insertSheet(def.name);
+        s.getRange(1,1,1,def.headers.length)
+          .setValues([def.headers])
+          .setFontWeight('bold')
+          .setBackground('#2E7D32')
+          .setFontColor('#ffffff');
+        s.setFrozenRows(1);
+        s.setTabColor('#2E7D32');
+        if (def.name === SHEET.SUBJECTS) needSeed = true;
       }
-
-      50% {
-        top: 100%;
-      }
-
-      100% {
-        top: 0;
-      }
-    }
-
-    #qr-reader__dashboard_section_swaplink,
-    #qr-reader__scan_region img {
-      display: none !important;
-    }
-
-    #html5-qrcode-button-camera-stop,
-    #html5-qrcode-button-camera-start {
-      display: none !important;
-    }
-
-    .cam-btns {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 10px
-    }
-
-    /* 스캔 오버레이 */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 200;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center
-    }
-
-    .overlay.show {
-      display: flex
-    }
-
-    .overlay.ok {
-      background: rgba(27, 94, 32, .94)
-    }
-
-    .overlay.dup {
-      background: rgba(21, 101, 192, .94)
-    }
-
-    .overlay.err {
-      background: rgba(183, 28, 28, .94)
-    }
-
-    .ov-icon {
-      font-size: 4.5rem;
-      margin-bottom: 14px;
-      animation: pop .25s ease
-    }
-
-    .ov-name {
-      font-size: 2rem;
-      font-weight: 900;
-      color: #fff;
-      margin-bottom: 6px
-    }
-
-    .ov-msg {
-      font-size: 1.1rem;
-      color: rgba(255, 255, 255, .9);
-      margin-bottom: 4px
-    }
-
-    .ov-sub {
-      font-size: .9rem;
-      color: rgba(255, 255, 255, .7)
-    }
-
-    @keyframes pop {
-      0% {
-        transform: scale(.6);
-        opacity: 0
-      }
-
-      100% {
-        transform: scale(1);
-        opacity: 1
-      }
-    }
-
-    /* 실시간 출석 카운터 */
-    .att-count {
-      background: linear-gradient(135deg, #FF6F00, #FFA000);
-      border-radius: var(--r);
-      padding: 16px;
-      margin-top: 12px;
-      text-align: center;
-      display: none
-    }
-
-    .att-count.show {
-      display: block
-    }
-
-    .att-count-num {
-      font-size: 2.8rem;
-      font-weight: 900;
-      color: #fff;
-      line-height: 1
-    }
-
-    .att-count-lbl {
-      font-size: 12px;
-      color: rgba(255, 255, 255, .85);
-      margin-top: 4px;
-      font-weight: 600
-    }
-
-    /* 쿨다운 배너 */
-    .cooldown-bar {
-      position: fixed;
-      bottom: calc(var(--nav) + env(safe-area-inset-bottom) + 8px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 0, 0, .78);
-      color: #fff;
-      padding: 12px 24px;
-      border-radius: 30px;
-      font-size: 13px;
-      font-weight: 700;
-      z-index: 150;
-      display: none;
-      white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, .25)
-    }
-
-    .cooldown-bar.show {
-      display: block
-    }
-
-    /* 오늘 현황 리스트 */
-    .rec-list {
-      max-height: 300px;
-      overflow-y: auto
-    }
-
-    .rec-item {
-      padding: 10px 4px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center
-    }
-
-    .rec-item:last-child {
-      border-bottom: none
-    }
-
-    .rec-name {
-      font-weight: 700;
-      font-size: 13px
-    }
-
-    .rec-info {
-      font-size: 11px;
-      color: var(--text2);
-      margin-top: 2px
-    }
-
-    /* ══ 등록 탭 ══ */
-    .reg-tabs {
-      display: flex;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--r3);
-      padding: 3px;
-      margin-bottom: 13px
-    }
-
-    .reg-tab {
-      flex: 1;
-      padding: 7px;
-      border: none;
-      background: transparent;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      border-radius: 6px;
-      font-family: inherit;
-      color: var(--text2);
-      transition: all .15s
-    }
-
-    .reg-tab.on {
-      background: #fff;
-      color: var(--g2);
-      box-shadow: var(--shadow)
-    }
-
-    .reg-pnl {
-      display: none
-    }
-
-    .reg-pnl.on {
-      display: block
-    }
-
-    .file-drop {
-      border: 2px dashed var(--border);
-      border-radius: var(--r);
-      padding: 22px;
-      text-align: center;
-      cursor: pointer;
-      transition: all .2s
-    }
-
-    .file-drop:hover,
-    .file-drop.drag {
-      border-color: var(--g3);
-      background: var(--bg)
-    }
-
-    .file-drop-ico {
-      font-size: 2.4rem;
-      margin-bottom: 6px
-    }
-
-    .file-drop-txt {
-      font-size: 12px;
-      color: var(--text3);
-      font-weight: 500
-    }
-
-    /* ══ 어르신 목록 ══ */
-    .s-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 11px
-    }
-
-    .sc {
-      background: #fff;
-      border-radius: var(--r);
-      overflow: hidden;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow)
-    }
-
-    .sc-top {
-      background: var(--bg);
-      padding: 9px 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center
-    }
-
-    .sc-id {
-      font-size: 10px;
-      font-weight: 900;
-      color: var(--g2);
-      background: #fff;
-      padding: 2px 7px;
-      border-radius: 5px;
-      border: 1px solid var(--border)
-    }
-
-    .sc-body {
-      padding: 11px 12px
-    }
-
-    .sc-name {
-      font-size: 15px;
-      font-weight: 900;
-      margin-bottom: 5px
-    }
-
-    .sc-info {
-      font-size: 11px;
-      color: var(--text2);
-      line-height: 1.8
-    }
-
-    .sc-qr {
-      padding: 10px 12px;
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      text-align: center
-    }
-
-    .sc-qr img {
-      width: 76px;
-      height: 76px;
-      border-radius: 6px;
-      margin-bottom: 5px
-    }
-
-    .sc-acts {
-      display: flex;
-      gap: 5px;
-      justify-content: center
-    }
-
-    /* ══ 테이블 ══ */
-    .tbl-wrap {
-      overflow-x: auto;
-      border-radius: var(--r3);
-      border: 1px solid var(--border)
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px
-    }
-
-    thead th {
-      background: var(--bg);
-      padding: 9px 10px;
-      text-align: left;
-      font-weight: 700;
-      white-space: nowrap;
-      color: var(--text2)
-    }
-
-    tbody td {
-      padding: 9px 10px;
-      border-bottom: 1px solid var(--border)
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none
-    }
-
-    tbody tr:hover td {
-      background: #FAFFF8
-    }
-
-    /* ══ 모달 ══ */
-    .modal-bg {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .46);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 300;
-      opacity: 0;
-      visibility: hidden;
-      transition: all .22s
-    }
-
-    .modal-bg.show {
-      opacity: 1;
-      visibility: visible
-    }
-
-    .modal {
-      background: #fff;
-      border-radius: var(--r);
-      padding: 20px;
-      max-width: 420px;
-      width: 92%;
-      max-height: 92vh;
-      overflow-y: auto
-    }
-
-    .modal-ttl {
-      font-size: 15px;
-      font-weight: 900;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px
-    }
-
-    .modal-x {
-      margin-left: auto;
-      background: none;
-      border: none;
-      font-size: 22px;
-      cursor: pointer;
-      color: var(--text3);
-      line-height: 1;
-      padding: 0 4px
-    }
-
-    /* ── 유틸 ── */
-    .hidden {
-      display: none !important
-    }
-
-    .mt1 {
-      margin-top: 8px
-    }
-
-    .mt2 {
-      margin-top: 14px
-    }
-
-    .mb1 {
-      margin-bottom: 8px
-    }
-
-    .mb2 {
-      margin-bottom: 14px
-    }
-
-    .txt-c {
-      text-align: center
-    }
-
-    .txt-sm {
-      font-size: 11px;
-      color: var(--text2)
-    }
-
-    .empty {
-      text-align: center;
-      padding: 28px;
-      color: var(--text3)
-    }
-
-    .empty-ico {
-      font-size: 2.8rem;
-      opacity: .4;
-      margin-bottom: 8px
-    }
-
-    .ld {
-      text-align: center;
-      padding: 24px;
-      color: var(--text2)
-    }
-
-    .spin {
-      width: 30px;
-      height: 30px;
-      border: 3px solid var(--border);
-      border-top-color: var(--g3);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 8px
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg)
-      }
-    }
-
-    @media(max-width:580px) {
-      .fr {
-        grid-template-columns: 1fr
-      }
-
-      .btn-row {
-        flex-direction: column
-      }
-
-      .s-grid {
-        grid-template-columns: 1fr
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-  <!-- 헤더 -->
-  <header class="hdr">
-    <div class="hdr-inner">
-      <div class="hdr-title">🌸 청춘캠퍼스 출석관리</div>
-      <div class="hdr-badge" id="hdrDate"></div>
-    </div>
-  </header>
-
-  <div class="wrap">
-
-    <!-- ══ API 설정 (최초 1회) ══ -->
-    <div id="apiSetup" class="api-banner hidden">
-      <div class="api-banner-icon">⚙️</div>
-      <div class="api-banner-text">
-        <strong>최초 1회 설정 필요</strong>
-        Apps Script 배포 URL을 입력하면 이후 자동 연결됩니다
-        <input type="text" class="api-input" id="apiUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
-        <button class="btn btn-p btn-sm mt1" onclick="saveApiUrl()" style="width:100%">💾 저장 (이후 자동연결)</button>
-      </div>
-    </div>
-
-    <!-- ══ TAB: 스캔 ══ -->
-    <div id="tab-scan" class="tab on">
-      <div class="card">
-        <div class="card-ttl">📷 QR 출석 체크</div>
-
-        <div class="subj-sel">
-          <label>📚 수업 과목 선택 <span class="req">*</span></label>
-          <select id="scanSubj" onchange="onScanSubjChange()">
-            <option value="">-- 과목을 선택하면 카메라가 시작됩니다 --</option>
-          </select>
-        </div>
-
-        <div id="scanStatus" class="scan-status wait">
-          <span>⚠️</span><span id="scanStatusTxt">과목을 먼저 선택해 주세요</span>
-        </div>
-
-        <div id="qr-reader" class="hidden"></div>
-
-        <div class="cam-btns mt1">
-          <div style="display:flex;gap:6px">
-            <button class="tgl btn-sm on" id="camBack" onclick="setCamera('back')">📷 후면</button>
-            <button class="tgl btn-sm" id="camFront" onclick="setCamera('front')">🤳 전면</button>
-          </div>
-          <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-            <input type="checkbox" id="voiceOn" checked style="width:16px;height:16px">
-            <label for="voiceOn" style="font-size:12px;font-weight:600;cursor:pointer">🔊 음성</label>
-          </div>
-        </div>
-
-        <div class="btn-row mt2">
-          <button class="btn btn-p hidden" id="btnStart" onclick="startScan()">📷 카메라 시작</button>
-          <button class="btn btn-o hidden" id="btnStop" onclick="stopScan()">⏹ 중지</button>
-        </div>
-
-        <!-- 실시간 출석 카운터 -->
-        <div class="att-count" id="attCount">
-          <div class="att-count-num" id="attCountNum">0</div>
-          <div class="att-count-lbl" id="attCountLbl">명 출석 완료</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-ttl">✅ 오늘 출석 현황
-          <span class="bdg bdg-g" id="todayCount" style="margin-left:auto">0명</span>
-        </div>
-        <div id="todayList" class="rec-list">
-          <div class="empty">
-            <div class="empty-ico">📋</div>아직 출석자 없음
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ TAB: 등록 ══ -->
-    <div id="tab-register" class="tab">
-      <div class="card">
-        <div class="card-ttl">➕ 어르신 등록</div>
-        <div class="reg-tabs">
-          <button class="reg-tab on" onclick="showRegPnl('individual',this)">👤 개별</button>
-          <button class="reg-tab" onclick="showRegPnl('batch',this)">📊 일괄</button>
-          <button class="reg-tab" onclick="showRegPnl('manage',this)">✏️ 수정·삭제</button>
-        </div>
-
-        <!-- 개별 등록 -->
-        <div id="reg-individual" class="reg-pnl on">
-          <form id="regForm" onsubmit="submitReg(event)">
-            <div class="fr">
-              <div class="fg">
-                <label class="fl">이름 <span class="req">*</span></label>
-                <input type="text" class="fi" name="name" required placeholder="홍길동">
-              </div>
-              <div class="fg">
-                <label class="fl">성별</label>
-                <select class="fi" name="gender">
-                  <option value="">선택</option>
-                  <option value="남">남</option>
-                  <option value="여">여</option>
-                </select>
-              </div>
-            </div>
-            <div class="fr">
-              <div class="fg">
-                <label class="fl">연락처</label>
-                <input type="tel" class="fi" name="contact" placeholder="010-0000-0000">
-              </div>
-              <div class="fg">
-                <label class="fl">거주지 (동)</label>
-                <select class="fi" name="address">
-                  <option value="">선택</option>
-                  <option value="강일동">강일동</option>
-                  <option value="상일1동">상일1동</option>
-                  <option value="상일2동">상일2동</option>
-                  <option value="명일1동">명일1동</option>
-                  <option value="명일2동">명일2동</option>
-                  <option value="고덕1동">고덕1동</option>
-                  <option value="고덕2동">고덕2동</option>
-                  <option value="암사1동">암사1동</option>
-                  <option value="암사2동">암사2동</option>
-                  <option value="암사3동">암사3동</option>
-                  <option value="천호1동">천호1동</option>
-                  <option value="천호2동">천호2동</option>
-                  <option value="천호3동">천호3동</option>
-                  <option value="성내1동">성내1동</option>
-                  <option value="성내2동">성내2동</option>
-                  <option value="성내3동">성내3동</option>
-                  <option value="길동">길동</option>
-                </select>
-              </div>
-            </div>
-            <div class="fg">
-              <label class="fl">수강 과목 <span class="req">*</span></label>
-              <div class="tgl-grp mt1" id="subjTgl"></div>
-              <div class="txt-sm mt1" id="subjTxt" style="color:var(--text3)">선택된 과목 없음</div>
-            </div>
-            <div class="fr">
-              <div class="fg">
-                <label class="fl">비상연락처</label>
-                <input type="tel" class="fi" name="emergencyContact" placeholder="010-0000-0000">
-              </div>
-              <div class="fg">
-                <label class="fl">관계</label>
-                <select class="fi" name="emergencyRelation">
-                  <option value="">선택</option>
-                  <option value="배우자">배우자</option>
-                  <option value="자녀">자녀</option>
-                  <option value="형제/자매">형제/자매</option>
-                  <option value="기타">기타</option>
-                </select>
-              </div>
-            </div>
-            <button type="submit" class="btn btn-p btn-w mt2">✅ 등록</button>
-            <div class="al al-i mt1" style="margin-bottom:0">
-              <span>💡</span>
-              <div>등록 시 <strong>활성</strong> 상태로 저장됩니다. 학기 종료 후 수강을 못하는 경우 수정·삭제 메뉴에서 <strong>비활성</strong>으로 변경하면 DB가
-                유지됩니다.</div>
-            </div>
-          </form>
-        </div>
-
-        <!-- 일괄 등록 -->
-        <div id="reg-batch" class="reg-pnl">
-          <div class="al al-i mb1">
-            <span>💡</span>
-            <div>엑셀 템플릿을 다운로드하여 작성 후 업로드하세요.<br>수강과목은 쉼표(,)로 구분하세요.</div>
-          </div>
-          <button class="btn btn-b btn-w mb1" onclick="dlTemplate()">📥 템플릿 다운로드</button>
-          <div class="file-drop" id="fileDrop" onclick="document.getElementById('batchFile').click()"
-            ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')"
-            ondrop="handleDrop(event)">
-            <div class="file-drop-ico">📄</div>
-            <div class="file-drop-txt">클릭하거나 파일을 드래그하세요 (.xlsx)</div>
-          </div>
-          <input type="file" id="batchFile" accept=".xlsx,.xls" style="display:none" onchange="handleBatch(event)">
-          <div id="batchPreview" class="hidden mt2"></div>
-          <button class="btn btn-p btn-w mt1 hidden" id="batchBtn" onclick="submitBatch()">✅ 일괄 등록</button>
-        </div>
-
-        <!-- 수정·삭제 -->
-        <div id="reg-manage" class="reg-pnl">
-          <div class="fg">
-            <input type="text" class="fi" id="manageQ" placeholder="🔍 이름 또는 ID 검색" oninput="filterManage()">
-          </div>
-          <div id="manageList">
-            <div class="ld">
-              <div class="spin"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ TAB: 어르신 ══ -->
-    <div id="tab-seniors" class="tab">
-      <div class="card">
-        <div class="card-ttl">👥 어르신 목록
-          <div style="margin-left:auto;display:flex;gap:4px">
-            <button class="btn btn-o btn-sm" onclick="printAllQR()">🖨️ QR 인쇄</button>
-            <button class="btn btn-o btn-sm" onclick="printAllBarcode()">🖨️ 바코드 인쇄</button>
-          </div>
-          <span class="bdg bdg-g" id="seniorCount">0명</span>
-        </div>
-        <div class="tgl-grp mb1" id="seniorSubjFilter">
-          <button class="tgl btn-sm on" onclick="filterSenior('전체',this)">전체</button>
-        </div>
-        <div class="tgl-grp mb2" id="seniorStatFilter">
-          <button class="tgl btn-sm on" onclick="filterSeniorStat('전체',this)">전체</button>
-          <button class="tgl btn-sm" onclick="filterSeniorStat('활성',this)">활성</button>
-          <button class="tgl btn-sm" onclick="filterSeniorStat('비활성',this)">비활성</button>
-        </div>
-        <div id="seniorList">
-          <div class="ld">
-            <div class="spin"></div>불러오는 중...
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ TAB: 기록 ══ -->
-    <div id="tab-records" class="tab">
-      <div class="card">
-        <div class="card-ttl">📋 출석 기록 조회</div>
-        <div class="fr mb1">
-          <div class="fg"><label class="fl">시작일</label><input type="date" class="fi" id="recS"></div>
-          <div class="fg"><label class="fl">종료일</label><input type="date" class="fi" id="recE"></div>
-        </div>
-        <div class="fr mb1">
-          <div class="fg"><label class="fl">과목</label>
-            <select class="fi" id="recSubj">
-              <option value="">전체</option>
-            </select>
-          </div>
-          <div class="fg"><label class="fl">이름/ID 검색</label>
-            <input type="text" class="fi" id="recKw" placeholder="검색어">
-          </div>
-        </div>
-        <button class="btn btn-p btn-w" onclick="searchRec()">🔍 조회</button>
-        <div id="recResult" class="mt2"></div>
-      </div>
-    </div>
-
-    <!-- ══ TAB: 통계 ══ -->
-    <div id="tab-stats" class="tab">
-      <div class="card">
-        <div class="card-ttl">📊 월별 통계</div>
-        <div class="fr mb1">
-          <div class="fg"><label class="fl">연도</label>
-            <input type="number" class="fi" id="stYear" min="2020" max="2035">
-          </div>
-          <div class="fg"><label class="fl">월</label>
-            <select class="fi" id="stMonth">
-              <option value="1">1월</option>
-              <option value="2">2월</option>
-              <option value="3">3월</option>
-              <option value="4">4월</option>
-              <option value="5">5월</option>
-              <option value="6">6월</option>
-              <option value="7">7월</option>
-              <option value="8">8월</option>
-              <option value="9">9월</option>
-              <option value="10">10월</option>
-              <option value="11">11월</option>
-              <option value="12">12월</option>
-            </select>
-          </div>
-        </div>
-        <div class="btn-row mb1">
-          <button class="btn btn-p" onclick="loadStats()">🔍 조회</button>
-          <button class="btn btn-b" onclick="exportStats()">📥 엑셀</button>
-        </div>
-        <div id="statsHead"></div>
-        <div id="statsBody" class="mt1"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-ttl">📄 월별 출석부 생성</div>
-        <div class="al al-i mb1"><span>💡</span>
-          <div>선택한 연/월·과목으로 스프레드시트에 출석부 시트를 생성합니다</div>
-        </div>
-        <div class="fr mb1">
-          <div class="fg"><label class="fl">연도</label>
-            <input type="number" class="fi" id="shYear" min="2020" max="2035">
-          </div>
-          <div class="fg"><label class="fl">월</label>
-            <select class="fi" id="shMonth">
-              <option value="1">1월</option>
-              <option value="2">2월</option>
-              <option value="3">3월</option>
-              <option value="4">4월</option>
-              <option value="5">5월</option>
-              <option value="6">6월</option>
-              <option value="7">7월</option>
-              <option value="8">8월</option>
-              <option value="9">9월</option>
-              <option value="10">10월</option>
-              <option value="11">11월</option>
-              <option value="12">12월</option>
-            </select>
-          </div>
-        </div>
-        <div class="fg mb1">
-          <label class="fl">과목</label>
-          <select class="fi" id="shSubj">
-            <option value="">-- 선택 --</option>
-          </select>
-        </div>
-        <button class="btn btn-p btn-w" onclick="makeSheet()">📄 출석부 생성</button>
-      </div>
-    </div>
-
-  </div><!-- /wrap -->
-
-  <!-- 네비 -->
-  <nav class="nav">
-    <button class="nav-btn active" id="nav-scan" onclick="goTab('scan')">
-      <span class="nav-icon">📷</span><span class="nav-label">스캔</span></button>
-    <button class="nav-btn" id="nav-register" onclick="goTab('register')">
-      <span class="nav-icon">➕</span><span class="nav-label">등록</span></button>
-    <button class="nav-btn" id="nav-seniors" onclick="goTab('seniors')">
-      <span class="nav-icon">👥</span><span class="nav-label">어르신</span></button>
-    <button class="nav-btn" id="nav-records" onclick="goTab('records')">
-      <span class="nav-icon">📋</span><span class="nav-label">기록</span></button>
-    <button class="nav-btn" id="nav-stats" onclick="goTab('stats')">
-      <span class="nav-icon">📊</span><span class="nav-label">통계</span></button>
-  </nav>
-
-  <!-- 스캔 오버레이 -->
-  <div class="overlay" id="overlay">
-    <div class="ov-icon" id="ovIcon"></div>
-    <div class="ov-name" id="ovName"></div>
-    <div class="ov-msg" id="ovMsg"></div>
-    <div class="ov-sub" id="ovSub"></div>
-    <div class="ov-time" id="ovTime" style="font-size:.9rem;color:rgba(255,255,255,.6);margin-top:6px"></div>
-  </div>
-
-  <!-- 쿨다운 배너 -->
-  <div class="cooldown-bar" id="cooldownBar">⏳ 잠시 후 다시 스캔해 주세요</div>
-
-  <!-- 수정 모달 -->
-  <div class="modal-bg" id="editModal">
-    <div class="modal">
-      <div class="modal-ttl">✏️ 어르신 정보 수정
-        <button class="modal-x" onclick="closeModal('editModal')">×</button>
-      </div>
-      <form id="editForm" onsubmit="submitEdit(event)">
-        <input type="hidden" id="eId">
-        <div class="fr">
-          <div class="fg"><label class="fl">이름</label><input type="text" class="fi" id="eName" required></div>
-          <div class="fg"><label class="fl">성별</label>
-            <select class="fi" id="eGender">
-              <option value="">선택</option>
-              <option value="남">남</option>
-              <option value="여">여</option>
-            </select>
-          </div>
-        </div>
-        <div class="fg"><label class="fl">연락처</label><input type="tel" class="fi" id="eContact"></div>
-        <div class="fg">
-          <label class="fl">거주지 (동)</label>
-          <select class="fi" id="eAddress">
-            <option value="">선택</option>
-            <option value="강일동">강일동</option>
-            <option value="상일1동">상일1동</option>
-            <option value="상일2동">상일2동</option>
-            <option value="명일1동">명일1동</option>
-            <option value="명일2동">명일2동</option>
-            <option value="고덕1동">고덕1동</option>
-            <option value="고덕2동">고덕2동</option>
-            <option value="암사1동">암사1동</option>
-            <option value="암사2동">암사2동</option>
-            <option value="암사3동">암사3동</option>
-            <option value="천호1동">천호1동</option>
-            <option value="천호2동">천호2동</option>
-            <option value="천호3동">천호3동</option>
-            <option value="성내1동">성내1동</option>
-            <option value="성내2동">성내2동</option>
-            <option value="성내3동">성내3동</option>
-            <option value="길동">길동</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl">수강 과목</label>
-          <div class="tgl-grp mt1" id="eTgl"></div>
-          <div class="txt-sm mt1" id="eTxt" style="color:var(--text3)"></div>
-        </div>
-        <div class="fr">
-          <div class="fg"><label class="fl">비상연락처</label><input type="tel" class="fi" id="eEmergency"></div>
-          <div class="fg"><label class="fl">관계</label>
-            <select class="fi" id="eRelation">
-              <option value="">선택</option>
-              <option value="배우자">배우자</option>
-              <option value="자녀">자녀</option>
-              <option value="형제/자매">형제/자매</option>
-              <option value="기타">기타</option>
-            </select>
-          </div>
-        </div>
-        <div class="fg">
-          <label class="fl">활동현황</label>
-          <select class="fi" id="eStatus">
-            <option value="활성">활성</option>
-            <option value="비활성">비활성</option>
-          </select>
-        </div>
-        <div class="btn-row">
-          <button type="button" class="btn btn-od" onclick="doDelete()">🗑️ 삭제</button>
-          <button type="submit" class="btn btn-p">💾 저장</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- QR 모달 -->
-  <div class="modal-bg" id="qrModal">
-    <div class="modal txt-c">
-      <div class="modal-ttl" style="justify-content:center">QR 코드
-        <button class="modal-x" onclick="closeModal('qrModal')">×</button>
-      </div>
-      <div id="qrContent"></div>
-      <div class="btn-row mt2">
-        <button class="btn btn-b" onclick="dlQR()">📥 QR 저장</button>
-        <button class="btn btn-b" onclick="dlBarcode()">📥 바코드 저장</button>
-        <button class="btn btn-o" onclick="closeModal('qrModal')">닫기</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // ════════════════════════════════════════
-    // API 설정 - 스프레드시트 ID 고정
-    // ════════════════════════════════════════
-    // Apps Script는 스프레드시트에 컨테이너 바인딩으로 배포됨
-    // doGet?action=getUrl 로 배포 URL 자동 조회 후 캐싱
-    var API_URL = localStorage.getItem('cc_api_url') || '';
-    var SPREADSHEET_ID = '1I5AbSuquBK_ThRk2E6lqLccvXmv2Eh40XzztwMTWtgg';
-
-    // Apps Script API 호출 (fetch POST)
-    async function api(action, params) {
-      if (!API_URL) {
-        // 저장된 URL 없으면 배너 표시
-        document.getElementById('apiSetup').classList.remove('hidden');
-        throw new Error('Apps Script URL을 먼저 설정해 주세요.');
-      }
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action, params: params || {} })
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || '서버 오류');
-      return data;
-    }
-
-    function saveApiUrl() {
-      var url = document.getElementById('apiUrlInput').value.trim();
-      if (!url || !url.startsWith('https://script.google.com')) {
-        alert('올바른 Apps Script URL을 입력해 주세요.\nhttps://script.google.com/macros/s/.../exec 형식');
-        return;
-      }
-      API_URL = url;
-      localStorage.setItem('cc_api_url', url);
-      document.getElementById('apiSetup').classList.add('hidden');
-      alert('✅ 저장 완료! 이후 자동으로 연결됩니다.');
-      init();
-    }
-
-    // ════════════════════════════════════════
-    // 전역 상태
-    // ════════════════════════════════════════
-    var allSubjects = [];
-    var allSeniors = [];
-    var batchData = [];
-    var regSubjs = [];
-    var editSubjs = [];
-    var editSenior = null;
-    var qrInfo = null;
-    var seniorSubjF = '전체';
-    var seniorStatF = '전체';
-
-    // 스캔 상태
-    var scanner = null;
-    var isScanning = false;
-    var camFacing = 'environment';
-    var cooldown = false;
-    var scanSubj = '';
-    var scanCount = 0;  // 이번 과목 세션 출석 카운터
-    var barcodeBuffer = '';
-    var barcodeTimer = null;
-
-    // ════════════════════════════════════════
-    // 초기화
-    // ════════════════════════════════════════
-    document.addEventListener('DOMContentLoaded', function () {
-      updateDate();
-      setInterval(updateDate, 60000);
-
-      var now = new Date();
-      document.getElementById('stYear').value = now.getFullYear();
-      document.getElementById('stMonth').value = now.getMonth() + 1;
-      document.getElementById('shYear').value = now.getFullYear();
-      document.getElementById('shMonth').value = now.getMonth() + 1;
-      var td = now.toISOString().split('T')[0];
-      document.getElementById('recS').value = td;
-      document.getElementById('recE').value = td;
-
-      // API URL 확인 - localStorage에 저장된 URL 있으면 바로 시작
-      if (API_URL) {
-        init();
-      } else {
-        document.getElementById('apiSetup').classList.remove('hidden');
-      }
-
-      // 과목 토글은 고정 목록으로 즉시 렌더링 (API 연결 전에도 표시)
-      buildSubjTgls('subjTgl', regSubjs, 'reg');
-      buildSubjFilter();
-      buildRecSubjSel();
-      buildShSubjSel();
-      buildScanSubjSel();
-
-      // 화면 회전 → 카메라 재시작
-      var rotTimer = null;
-      function onRotate() {
-        if (!isScanning) return;
-        clearTimeout(rotTimer);
-        rotTimer = setTimeout(function () { stopScan(); setTimeout(startScan, 500); }, 400);
-      }
-      window.addEventListener('orientationchange', onRotate);
-      if (screen.orientation) screen.orientation.addEventListener('change', onRotate);
-
-      // 모달 배경 클릭
-      document.querySelectorAll('.modal-bg').forEach(function (el) {
-        el.addEventListener('click', function (e) { if (e.target === el) el.classList.remove('show'); });
-      });
+    });
+    if (needSeed) _seedSubjects();
+    return { success: true, message: '초기 설정 완료' };
+  } catch(e) {
+    return { success: false, message: e.message };
+  }
+}
+
+function _seedSubjects() {
+  const s = _sheet(SHEET.SUBJECTS);
+  if (s.getLastRow() >= 2) return;
+  DEFAULT_SUBJECTS.forEach((sub, i) => {
+    s.appendRow(['P' + String(i+1).padStart(3,'0'), sub.name, sub.day, STATUS_USING]);
+  });
+}
+
+// ============================================================
+// 어르신 등록
+// ============================================================
+function registerSenior(data) {
+  const s   = _sheet(SHEET.SENIORS);
+  const id  = _newId();
+  const now = _today();
+  s.appendRow([
+    id,
+    data.name              || '',
+    data.gender            || '',
+    data.contact           || '',
+    data.address           || '',
+    Array.isArray(data.subjects) ? data.subjects.join(',') : (data.subjects||''),
+    data.emergencyContact  || '',
+    data.emergencyRelation || '',
+    STATUS_ACTIVE,
+    now
+  ]);
+  SpreadsheetApp.flush();
+  return { id, qrCode: _qrUrl(id), message: id + ' ' + (data.name||'') + ' 등록 완료' };
+}
+
+// ============================================================
+// 어르신 일괄 등록
+// ============================================================
+function registerSeniorsBatch(list) {
+  if (!list || !list.length) throw new Error('데이터가 없습니다.');
+  const s   = _sheet(SHEET.SENIORS);
+  const lr  = s.getLastRow();
+  const now = _today();
+  let nextNum = 1;
+  if (lr >= 2) {
+    nextNum = parseInt(String(s.getRange(lr,1).getValue()).replace(/\D/g,'') || '0', 10) + 1;
+  }
+  const rows = list.map((d, i) => [
+    'S' + String(nextNum+i).padStart(3,'0'),
+    d.name||'', d.gender||'', d.contact||'', d.address||'',
+    Array.isArray(d.subjects) ? d.subjects.join(',') : (d.subjects||''),
+    d.emergencyContact||'', d.emergencyRelation||'',
+    STATUS_ACTIVE, now
+  ]);
+  s.getRange(lr+1, 1, rows.length, HDR_SENIORS.length).setValues(rows);
+  SpreadsheetApp.flush();
+  return { count: rows.length, message: rows.length + '명 등록 완료' };
+}
+
+// ============================================================
+// 어르신 목록
+// ============================================================
+function getSeniors() {
+  const s  = _sheet(SHEET.SENIORS);
+  const lr = s.getLastRow();
+  if (lr < 2) return { data: [] };
+  const rows = s.getRange(2, 1, lr-1, HDR_SENIORS.length).getValues();
+  const data = rows
+    .filter(r => r[0] && String(r[0]).trim())
+    .map(r => ({
+      id:                String(r[0]||''),
+      name:              String(r[1]||''),
+      gender:            String(r[2]||''),
+      contact:           String(r[3]||''),
+      address:           String(r[4]||''),
+      subjects:          String(r[5]||'').split(',').map(x=>x.trim()).filter(Boolean),
+      emergencyContact:  String(r[6]||''),
+      emergencyRelation: String(r[7]||''),
+      status:            String(r[8]||STATUS_ACTIVE),
+      registeredAt:      _fmtDate(r[9]),
+      qrCode:            _qrUrl(String(r[0]||''))
+    }));
+  return { data };
+}
+
+// ============================================================
+// 어르신 수정
+// ============================================================
+function updateSenior(id, data) {
+  const s  = _sheet(SHEET.SENIORS);
+  const lr = s.getLastRow();
+  for (let i = 2; i <= lr; i++) {
+    if (String(s.getRange(i,1).getValue()) !== String(id)) continue;
+    const cur = s.getRange(i,1,1,HDR_SENIORS.length).getValues()[0];
+    s.getRange(i,1,1,HDR_SENIORS.length).setValues([[
+      id,
+      data.name              ?? cur[1],
+      data.gender            ?? cur[2],
+      data.contact           ?? cur[3],
+      data.address           ?? cur[4],
+      Array.isArray(data.subjects) ? data.subjects.join(',') : (data.subjects ?? cur[5]),
+      data.emergencyContact  ?? cur[6],
+      data.emergencyRelation ?? cur[7],
+      data.status            ?? cur[8],
+      cur[9]
+    ]]);
+    SpreadsheetApp.flush();
+    return { message: '수정 완료' };
+  }
+  throw new Error('해당 ID를 찾을 수 없습니다.');
+}
+
+// ============================================================
+// 어르신 삭제
+// ============================================================
+function deleteSenior(id) {
+  const s  = _sheet(SHEET.SENIORS);
+  const lr = s.getLastRow();
+  for (let i = 2; i <= lr; i++) {
+    if (String(s.getRange(i,1).getValue()) !== String(id)) continue;
+    s.deleteRow(i);
+    SpreadsheetApp.flush();
+    return { message: '삭제 완료' };
+  }
+  throw new Error('해당 ID를 찾을 수 없습니다.');
+}
+
+// ============================================================
+// 과목 조회
+// ============================================================
+function getSubjects() {
+  const s  = _sheet(SHEET.SUBJECTS);
+  const lr = s.getLastRow();
+  if (lr < 2) return { data: [] };
+  const rows = s.getRange(2, 1, lr-1, HDR_SUBJECTS.length).getValues();
+  const data = rows
+    .filter(r => r[0] && String(r[0]).trim())
+    .map(r => ({
+      id:          String(r[0]||''),
+      subjectName: String(r[1]||''),
+      day:         String(r[2]||''),
+      useStatus:   String(r[3]||STATUS_USING)
+    }));
+  return { data };
+}
+
+// ============================================================
+// QR 출석 처리
+// ============================================================
+function markAttendance(qrId, subjectName) {
+  const now      = new Date();
+  const todayStr = _today();
+
+  const senSheet = _sheet(SHEET.SENIORS);
+  const senLr    = senSheet.getLastRow();
+  if (senLr < 2) throw new Error('등록된 어르신이 없습니다.');
+
+  const senRows = senSheet.getRange(2, 1, senLr-1, HDR_SENIORS.length).getValues();
+  const senior  = senRows.find(r => String(r[0]) === String(qrId));
+  if (!senior)  throw new Error('등록되지 않은 QR코드입니다.');
+  if (String(senior[8]) === STATUS_INACTIVE)
+    throw new Error(senior[1] + ' 어르신은 비활성 상태입니다.');
+
+  const mySubjects = String(senior[5]||'').split(',').map(x=>x.trim()).filter(Boolean);
+  if (subjectName && !mySubjects.includes(subjectName))
+    throw new Error(senior[1] + ' 어르신은 [' + subjectName + '] 수강생이 아닙니다.');
+
+  const attSheet = _sheet(SHEET.ATTENDANCE);
+  const attLr    = attSheet.getLastRow();
+  const attRows  = attLr >= 2
+    ? attSheet.getRange(2, 1, attLr-1, HDR_ATTENDANCE.length).getValues()
+    : [];
+
+  // 이미 출석
+  const alreadyDone = attRows.some(r =>
+    _fmtDate(r[0]) === todayStr &&
+    String(r[2]) === String(qrId) &&
+    (!subjectName || r[1] === subjectName)
+  );
+  if (alreadyDone)
+    return { alreadyDone: true, name: senior[1],
+             message: senior[1] + ' 어르신은 이미 출석하셨습니다.' };
+
+  // 1분 이내 재스캔 방지
+  const recent = attRows
+    .filter(r => _fmtDate(r[0]) === todayStr && String(r[2]) === String(qrId))
+    .map(r => ({ t: r[0] instanceof Date ? r[0].getTime() : 0 }))
+    .sort((a,b) => b.t - a.t)[0];
+  if (recent && now.getTime() - recent.t < 60000) {
+    const sec = Math.ceil((60000 - (now.getTime() - recent.t)) / 1000);
+    throw new Error(sec + '초 후 다시 시도해 주세요.');
+  }
+
+  attSheet.appendRow([now, subjectName||'', senior[0], senior[1]]);
+  SpreadsheetApp.flush();
+  _reflectToAttSheet(now, subjectName, senior[1]);
+
+  return { alreadyDone: false, name: senior[1], subject: subjectName||'',
+           message: senior[1] + ' 어르신 출석 완료' };
+}
+
+function _reflectToAttSheet(dateObj, subjectName, seniorName) {
+  try {
+    if (!subjectName) return;
+    const y  = dateObj.getFullYear();
+    const m  = dateObj.getMonth() + 1;
+    const nm = '출석부_' + y + '_' + String(m).padStart(2,'0') + '_' + subjectName;
+    const ss = _ss();
+    let out  = ss.getSheetByName(nm);
+    if (!out) {
+      const r = generateAttendanceSheet(y, m, subjectName);
+      if (!r.success) return;
+      out = ss.getSheetByName(nm);
+    }
+    if (!out) return;
+    const lastC = out.getLastColumn();
+    const lastR = out.getLastRow();
+    if (lastC < 2 || lastR < 2) return;
+    const hdr  = out.getRange(1, 2, 1, lastC-1).getValues()[0];
+    const colI = hdr.findIndex(h => String(h) === dateObj.getDate() + '일');
+    if (colI < 0) return;
+    const names = out.getRange(2, 1, lastR-1, 1).getValues();
+    const rowI  = names.findIndex(n => n[0] === seniorName);
+    if (rowI < 0) return;
+    out.getRange(rowI+2, colI+2).setValue('○');
+  } catch(e) { Logger.log('_reflectToAttSheet: ' + e.message); }
+}
+
+// ============================================================
+// 오늘 출석 현황
+// ============================================================
+function getTodayStatus(subjectName) {
+  const todayStr = _today();
+  const s  = _sheet(SHEET.ATTENDANCE);
+  const lr = s.getLastRow();
+  if (lr < 2) return { count: 0, records: [] };
+  const rows = s.getRange(2, 1, lr-1, HDR_ATTENDANCE.length).getValues();
+  const records = rows
+    .filter(r => _fmtDate(r[0]) === todayStr && (!subjectName || r[1] === subjectName))
+    .map(r => ({
+      time:        _fmtTime(r[0]),
+      subjectName: String(r[1]||''),
+      seniorId:    String(r[2]||''),
+      seniorName:  String(r[3]||'')
+    }))
+    .reverse();
+  return { count: records.length, records };
+}
+
+// ============================================================
+// 출석 기록 조회
+// ============================================================
+function getAttendanceRecords(startDate, endDate, subjectName, keyword) {
+  const s  = _sheet(SHEET.ATTENDANCE);
+  const lr = s.getLastRow();
+  if (lr < 2) return { data: [] };
+  const rows = s.getRange(2, 1, lr-1, HDR_ATTENDANCE.length).getValues();
+  let data = rows.map(r => ({
+    date:        _fmtDate(r[0]),
+    time:        _fmtTime(r[0]),
+    subjectName: String(r[1]||''),
+    seniorId:    String(r[2]||''),
+    seniorName:  String(r[3]||'')
+  }));
+  const s1 = startDate ? String(startDate).slice(0,10) : '';
+  const s2 = endDate   ? String(endDate).slice(0,10)   : '';
+  if (s1) data = data.filter(d => d.date >= s1);
+  if (s2) data = data.filter(d => d.date <= s2);
+  if (subjectName) data = data.filter(d => d.subjectName === subjectName);
+  if (keyword) {
+    const k = keyword.toLowerCase();
+    data = data.filter(d =>
+      d.seniorName.toLowerCase().includes(k) || d.seniorId.toLowerCase().includes(k));
+  }
+  data.sort((a,b) => (b.date+b.time) > (a.date+a.time) ? 1 : -1);
+  return { data };
+}
+
+// ============================================================
+// 월별 통계
+// ============================================================
+function getMonthlyStats(year, month) {
+  const prefix  = year + '-' + String(month).padStart(2,'0');
+  const subSh   = _sheet(SHEET.SUBJECTS);
+  const attSh   = _sheet(SHEET.ATTENDANCE);
+  const subLr   = subSh.getLastRow();
+  const attLr   = attSh.getLastRow();
+  if (subLr < 2) return { data: [], uniqueCount: 0, totalCount: 0 };
+
+  const subRows = subSh.getRange(2, 1, subLr-1, HDR_SUBJECTS.length).getValues();
+  const attRows = attLr >= 2
+    ? attSh.getRange(2, 1, attLr-1, HDR_ATTENDANCE.length).getValues()
+    : [];
+
+  const uniqueSet = new Set();
+  let totalCount  = 0;
+  attRows.forEach(r => {
+    if (!_fmtDate(r[0]).startsWith(prefix)) return;
+    totalCount++;
+    if (r[2]) uniqueSet.add(String(r[2]));
+  });
+
+  const data = subRows
+    .filter(r => r[3] === STATUS_USING)
+    .map(r => {
+      const sn    = r[1];
+      const dates = _datesInMonth(year, month, _parseDays(r[2]));
+      const count = attRows.filter(a =>
+        _fmtDate(a[0]).startsWith(prefix) && a[1] === sn
+      ).length;
+      return { subjectName: sn, day: String(r[2]||''), totalSessions: dates.length, attendCount: count };
     });
 
-    function updateDate() {
-      document.getElementById('hdrDate').textContent =
-        new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' });
-    }
-
-    async function init() {
-      try {
-        await api('initialSetup', {});
-        const r = await api('getSubjects', {});
-        if (r.data && r.data.length) {
-          allSubjects = r.data;
-          // 서버 과목으로 UI 갱신
-          buildScanSubjSel();
-          buildSubjTgls('subjTgl', regSubjs, 'reg');
-          buildSubjFilter();
-          buildRecSubjSel();
-          buildShSubjSel();
-        }
-        loadTodayStatus('');
-      } catch (e) {
-        console.error('init error:', e);
-      }
-
-      // 바코드 스캐너 전역 리스너 (Keyboard Wedge 방식)
-      window.addEventListener('keydown', function (e) {
-        // 스캔 탭일 때만 동작
-        if (document.getElementById('tab-scan').classList.contains('on')) {
-          // 입력창에 포커스가 있는 경우는 제외 (수정/검색 등 방해 금지)
-          if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
-
-          if (e.key === 'Enter') {
-            if (barcodeBuffer.length > 2) {
-              onQR(barcodeBuffer.trim()); // QR 처리 로직 재사용
-            }
-            barcodeBuffer = '';
-          } else if (e.key.length === 1) {
-            barcodeBuffer += e.key;
-            // 일정 시간(200ms) 동안 입력이 없으면 버퍼 초기화 (사람이 타이핑하는 경우 등 방지)
-            clearTimeout(barcodeTimer);
-            barcodeTimer = setTimeout(() => { barcodeBuffer = ''; }, 200);
-          }
-        }
-      });
-    }
-
-    // ════════════════════════════════════════
-    // 탭 전환
-    // ════════════════════════════════════════
-    function goTab(name) {
-      document.querySelectorAll('.tab').forEach(function (el) { el.classList.remove('on'); });
-      document.querySelectorAll('.nav-btn').forEach(function (el) { el.classList.remove('active'); });
-      document.getElementById('tab-' + name).classList.add('on');
-      document.getElementById('nav-' + name).classList.add('active');
-      if (name !== 'scan' && isScanning) stopScan();
-      if (name === 'seniors') loadSeniors();
-      if (name === 'register') loadManage();
-      if (name === 'scan') loadTodayStatus(scanSubj);
-    }
-
-    // ════════════════════════════════════════
-    // 과목 헬퍼
-    // ════════════════════════════════════════
-
-    // 고정 과목 목록 (서버 데이터가 없어도 바로 사용)
-    var FIXED_SUBJECTS = [
-      { subjectName: '한글교실 (초급1)', day: '수,금', useStatus: '사용' },
-      { subjectName: '한글교실 (초급2)', day: '수,금', useStatus: '사용' },
-      { subjectName: '한글교실 (상급)', day: '월,수,금', useStatus: '사용' },
-      { subjectName: '디지털교육 (초급)', day: '목', useStatus: '사용' },
-      { subjectName: '디지털교육 (중급)', day: '목', useStatus: '사용' },
-      { subjectName: '영어교실 (초급)', day: '화', useStatus: '사용' },
-      { subjectName: '영어교실 (중급)', day: '목', useStatus: '사용' },
-      { subjectName: '실버요가 1', day: '화', useStatus: '사용' },
-      { subjectName: '실버요가 2', day: '금', useStatus: '사용' },
-      { subjectName: '맷돌체조', day: '목', useStatus: '사용' },
-      { subjectName: '노래교실', day: '금', useStatus: '사용' }
-    ];
-
-    // 서버에서 받은 과목이 있으면 우선 사용, 없으면 고정 목록 사용
-    function activeSubjs() {
-      var src = allSubjects.length ? allSubjects : FIXED_SUBJECTS;
-      return src.filter(function (s) { return s.useStatus === '사용'; });
-    }
-
-    function todaySubjs() {
-      var dow = new Date().getDay();
-      return activeSubjs().filter(function (s) {
-        return parseDayStr(s.day).indexOf(dow) >= 0;
-      });
-    }
-
-    function parseDayStr(str) {
-      var map = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
-      return (str || '').replace(/\s/g, '').split(/[,，]/)
-        .map(function (p) { return map[p]; }).filter(function (n) { return n !== undefined; });
-    }
-
-    function buildScanSubjSel() {
-      var sel = document.getElementById('scanSubj');
-      var list = todaySubjs();
-      sel.innerHTML = '<option value="">-- 과목을 선택하면 카메라가 시작됩니다 --</option>';
-      if (!list.length) {
-        sel.innerHTML += '<option value="" disabled>오늘 수업이 없습니다</option>';
-      }
-      list.forEach(function (s) {
-        var opt = document.createElement('option');
-        opt.value = s.subjectName;
-        opt.textContent = s.subjectName + '  (' + s.day + ')';
-        sel.appendChild(opt);
-      });
-    }
-
-    function buildSubjTgls(containerId, arr, mode) {
-      var grp = document.getElementById(containerId);
-      if (!grp) return;
-      grp.innerHTML = '';
-      activeSubjs().forEach(function (s) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'tgl' + (arr.indexOf(s.subjectName) >= 0 ? ' on' : '');
-        btn.textContent = s.subjectName;
-        btn.onclick = (function (name, b) {
-          return function () { toggleSubj(name, b, arr, mode); };
-        })(s.subjectName, btn);
-        grp.appendChild(btn);
-      });
-    }
-
-    function toggleSubj(name, btn, arr, mode) {
-      var idx = arr.indexOf(name);
-      if (idx >= 0) { arr.splice(idx, 1); btn.classList.remove('on'); }
-      else { arr.push(name); btn.classList.add('on'); }
-      var txtId = mode === 'reg' ? 'subjTxt' : 'eTxt';
-      document.getElementById(txtId).textContent =
-        arr.length ? '선택: ' + arr.join(', ') : '선택된 과목 없음';
-    }
-
-    function buildSubjFilter() {
-      var div = document.getElementById('seniorSubjFilter');
-      div.innerHTML = '<button class="tgl btn-sm on" onclick="filterSenior(\'전체\',this)">전체</button>';
-      activeSubjs().forEach(function (s) {
-        var btn = document.createElement('button');
-        btn.className = 'tgl btn-sm';
-        btn.textContent = s.subjectName;
-        btn.onclick = (function (name) { return function () { filterSenior(name, btn); }; })(s.subjectName);
-        div.appendChild(btn);
-      });
-    }
-
-    function buildRecSubjSel() {
-      var sel = document.getElementById('recSubj');
-      sel.innerHTML = '<option value="">전체</option>';
-      activeSubjs().forEach(function (s) {
-        var opt = document.createElement('option');
-        opt.value = s.subjectName; opt.textContent = s.subjectName;
-        sel.appendChild(opt);
-      });
-    }
-
-    function buildShSubjSel() {
-      var sel = document.getElementById('shSubj');
-      sel.innerHTML = '<option value="">-- 선택 --</option>';
-      activeSubjs().forEach(function (s) {
-        var opt = document.createElement('option');
-        opt.value = s.subjectName; opt.textContent = s.subjectName;
-        sel.appendChild(opt);
-      });
-    }
-
-    // ════════════════════════════════════════
-    // QR 스캔
-    // ════════════════════════════════════════
-    function onScanSubjChange() {
-      scanSubj = document.getElementById('scanSubj').value;
-      if (isScanning) stopScan();
-      scanCount = 0;
-      updateScanCount();
-      if (scanSubj) {
-        setTimeout(startScan, 200);
-        loadTodayStatus(scanSubj);
-      } else {
-        setScanWait('과목을 먼저 선택해 주세요');
-        loadTodayStatus('');
-      }
-    }
-
-    function setCamera(type) {
-      camFacing = type === 'front' ? 'user' : 'environment';
-      document.getElementById('camBack').classList.toggle('on', type === 'back');
-      document.getElementById('camFront').classList.toggle('on', type === 'front');
-      if (isScanning) { stopScan(); setTimeout(startScan, 400); }
-    }
-
-    function setScanWait(msg) {
-      var el = document.getElementById('scanStatus');
-      el.className = 'scan-status wait';
-      document.getElementById('scanStatusTxt').textContent = msg;
-    }
-    function setScanLive(subj) {
-      var el = document.getElementById('scanStatus');
-      el.className = 'scan-status live';
-      document.getElementById('scanStatusTxt').textContent = '📡 스캔 중: ' + subj;
-    }
-
-    function startScan() {
-      if (isScanning) return;
-      if (!scanSubj) { setScanWait('과목을 먼저 선택해 주세요'); return; }
-
-      document.getElementById('qr-reader').classList.remove('hidden');
-      document.getElementById('btnStart').classList.add('hidden');
-      document.getElementById('btnStop').classList.remove('hidden');
-
-      scanner = new Html5Qrcode('qr-reader');
-      var isLand = window.innerWidth > window.innerHeight;
-
-      scanner.start(
-        { facingMode: camFacing },
-        {
-          fps: 20, // 스캔 속도 향상
-          qrbox: function (w, h) { var s = Math.floor(Math.min(w, h) * 0.8); return { width: s, height: s }; },
-          aspectRatio: isLand ? 16 / 9 : 4 / 3,
-          videoConstraints: {
-            facingMode: camFacing,
-            width: { min: 640, ideal: 1280, max: 1920 },
-            height: { min: 480, ideal: 720, max: 1080 }
-          }
-        },
-        onQR,
-        function () { }
-      ).then(function () {
-        isScanning = true;
-        setScanLive(scanSubj);
-      }).catch(function (err) {
-        isScanning = false;
-        document.getElementById('qr-reader').classList.add('hidden');
-        document.getElementById('btnStart').classList.remove('hidden');
-        document.getElementById('btnStop').classList.add('hidden');
-        var msg = '카메라 오류';
-        if (String(err).indexOf('NotAllowedError') >= 0) msg = '카메라 권한을 허용해 주세요 (브라우저 설정 → 카메라 허용)';
-        else if (String(err).indexOf('NotFoundError') >= 0) msg = '카메라를 찾을 수 없습니다';
-        else if (String(err).indexOf('NotReadableError') >= 0) msg = '카메라가 다른 앱에서 사용 중입니다';
-        setScanWait('⚠️ ' + msg);
-      });
-    }
-
-    function stopScan() {
-      if (!isScanning || !scanner) return;
-      scanner.stop().then(function () {
-        isScanning = false;
-        document.getElementById('qr-reader').classList.add('hidden');
-        document.getElementById('btnStart').classList.remove('hidden');
-        document.getElementById('btnStop').classList.add('hidden');
-        setScanWait('스캔 중지됨');
-      }).catch(function () { });
-    }
-
-    async function onQR(text) {
-      if (cooldown || !scanSubj) return;
-      cooldown = true;
-
-      // 쿨다운 배너 표시
-      var cdBar = document.getElementById('cooldownBar');
-      cdBar.classList.add('show');
-
-      try { if (scanner) scanner.pause(); } catch (e) { }
-
-      try {
-        const r = await api('markAttendance', { qrId: text.trim(), subjectName: scanSubj });
-        var timeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        if (r.alreadyDone) {
-          showOverlay('dup', '🔔', r.name, '이미 출석 완료', scanSubj, timeStr);
-          speak(r.name + '님은 이미 출석하셨습니다');
-        } else {
-          scanCount++;
-          updateScanCount();
-          showOverlay('ok', '✅', r.name, '출석 완료!', scanSubj, timeStr);
-          speak(r.name + '님, 출석하셨습니다');
-        }
-        loadTodayStatus(scanSubj);
-      } catch (e) {
-        showOverlay('err', '❌', '', e.message || '오류', '', '');
-        speak('확인이 필요합니다');
-      }
-
-      setTimeout(function () {
-        hideOverlay();
-        cooldown = false;
-        cdBar.classList.remove('show');
-        try { if (scanner && isScanning) scanner.resume(); } catch (e) { }
-      }, 2500);
-    }
-
-    function updateScanCount() {
-      var box = document.getElementById('attCount');
-      var num = document.getElementById('attCountNum');
-      var lbl = document.getElementById('attCountLbl');
-      if (scanCount > 0) {
-        num.textContent = scanCount;
-        lbl.textContent = (scanSubj || '') + ' · ' + scanCount + '명 출석 완료';
-        box.classList.add('show');
-      } else {
-        box.classList.remove('show');
-      }
-    }
-
-    function showOverlay(type, icon, name, msg, sub, time) {
-      var el = document.getElementById('overlay');
-      el.className = 'overlay show ' + type;
-      document.getElementById('ovIcon').textContent = icon;
-      document.getElementById('ovName').textContent = name;
-      document.getElementById('ovMsg').textContent = msg;
-      document.getElementById('ovSub').textContent = sub;
-      document.getElementById('ovTime').textContent = time || '';
-      if (navigator.vibrate) navigator.vibrate(type === 'ok' ? 100 : [80, 40, 80]);
-    }
-    function hideOverlay() { document.getElementById('overlay').className = 'overlay'; }
-
-    // ════════════════════════════════════════
-    // 음성 안내
-    // ════════════════════════════════════════
-    var ttsReady = false;
-    document.addEventListener('click', function () {
-      if (ttsReady || !window.speechSynthesis) return;
-      window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
-      ttsReady = true;
-    }, { once: true });
-
-    function speak(text) {
-      if (!document.getElementById('voiceOn').checked || !window.speechSynthesis) return;
-      window.speechSynthesis.cancel();
-      var u = new SpeechSynthesisUtterance(text);
-      u.lang = 'ko-KR'; u.rate = 0.9; u.pitch = 1; u.volume = 1;
-      function go() { window.speechSynthesis.speak(u); }
-      if (window.speechSynthesis.getVoices().length) go();
-      else window.speechSynthesis.addEventListener('voiceschanged',
-        function h() { window.speechSynthesis.removeEventListener('voiceschanged', h); go(); });
-    }
-
-    // ════════════════════════════════════════
-    // 오늘 출석 현황
-    // ════════════════════════════════════════
-    async function loadTodayStatus(subj) {
-      try {
-        const r = await api('getTodayStatus', { subjectName: subj || '' });
-        document.getElementById('todayCount').textContent = (r.count || 0) + '명';
-        var div = document.getElementById('todayList');
-        if (!r.records || !r.records.length) {
-          div.innerHTML = '<div class="empty"><div class="empty-ico">📋</div>아직 출석자 없음</div>';
-          return;
-        }
-        div.innerHTML = r.records.slice(0, 50).map(function (x) {
-          return '<div class="rec-item">'
-            + '<div><div class="rec-name">' + x.seniorName + '</div>'
-            + '<div class="rec-info">' + x.subjectName + ' · ' + x.time + '</div></div>'
-            + '<span class="bdg bdg-g">출석</span></div>';
-        }).join('');
-      } catch (e) { console.error('loadTodayStatus:', e); }
-    }
-
-    // ════════════════════════════════════════
-    // 어르신 목록
-    // ════════════════════════════════════════
-    async function loadSeniors() {
-      document.getElementById('seniorList').innerHTML = '<div class="ld"><div class="spin"></div>불러오는 중...</div>';
-      try {
-        const r = await api('getSeniors', {});
-        allSeniors = r.data || [];
-        renderSeniors();
-      } catch (e) {
-        document.getElementById('seniorList').innerHTML =
-          '<div class="empty"><div class="empty-ico">⚠️</div>' + e.message + '</div>';
-      }
-    }
-
-    function filterSenior(subj, btn) {
-      seniorSubjF = subj;
-      document.querySelectorAll('#seniorSubjFilter .tgl').forEach(function (b) { b.classList.remove('on'); });
-      btn.classList.add('on');
-      renderSeniors();
-    }
-    function filterSeniorStat(stat, btn) {
-      seniorStatF = stat;
-      document.querySelectorAll('#seniorStatFilter .tgl').forEach(function (b) { b.classList.remove('on'); });
-      btn.classList.add('on');
-      renderSeniors();
-    }
-
-    function renderSeniors() {
-      var list = allSeniors.filter(function (s) {
-        var ok1 = seniorSubjF === '전체' || s.subjects.indexOf(seniorSubjF) >= 0;
-        var ok2 = seniorStatF === '전체' || s.status === seniorStatF;
-        return ok1 && ok2;
-      });
-      document.getElementById('seniorCount').textContent = list.length + '명';
-      var div = document.getElementById('seniorList');
-      if (!list.length) {
-        div.innerHTML = '<div class="empty"><div class="empty-ico">👥</div>해당 어르신 없음</div>';
-        return;
-      }
-      div.innerHTML = '<div class="s-grid">' + list.map(function (w) {
-        var inactive = w.status === '비활성';
-        return '<div class="sc" style="' + (inactive ? 'opacity:.55;' : '') + '">'
-          + '<div class="sc-top" style="' + (inactive ? 'background:#F5F5F5' : '') + '">'
-          + '<span class="sc-id">' + w.id + '</span>'
-          + '<span class="bdg ' + (inactive ? 'bdg-gr' : 'bdg-g') + '">'
-          + (inactive ? '⏸ 비활성' : '✅ 활성') + '</span></div>'
-          + '<div class="sc-body"><div class="sc-name">' + w.name + (w.gender ? ' (' + w.gender + ')' : '') + '</div>'
-          + '<div class="sc-info">'
-          + (w.contact ? '📞 ' + w.contact + '<br>' : '')
-          + (w.address ? '📍 ' + w.address + '<br>' : '')
-          + '📚 ' + (w.subjects.length ? w.subjects.join(', ') : '없음') + '<br>'
-          + (w.registeredAt ? '📅 ' + w.registeredAt : '')
-          + '</div></div>'
-          + '<div class="sc-qr"><img src="' + w.qrCode + '" alt="QR" onerror="this.style.display=\'none\'">'
-          + '<div class="sc-acts">'
-          + '<button class="btn btn-o btn-sm" onclick="showQR(\'' + w.id + '\',\'' + w.name + '\',\'' + w.qrCode + '\')">🔍 QR/바코드</button>'
-          + '<button class="btn btn-o btn-sm" onclick="openEdit(\'' + w.id + '\')">✏️</button>'
-          + '</div></div></div>';
-      }).join('') + '</div>';
-    }
-
-    // ════════════════════════════════════════
-    // QR 모달
-    // ════════════════════════════════════════
-    function showQR(id, name, url) {
-      qrInfo = { id, name, url };
-      document.getElementById('qrContent').innerHTML =
-        '<p style="font-weight:900;font-size:16px;margin-bottom:6px">' + name + '</p>'
-        + '<p class="txt-sm mb1">' + id + '</p>'
-        + '<div style="background:#fff;padding:10px;border-radius:8px;margin-bottom:10px">'
-        + '  <img src="' + url + '" style="width:160px;height:160px;display:block;margin:0 auto">'
-        + '</div>'
-        + '<div style="background:#fff;padding:10px;border-radius:8px">'
-        + '  <svg id="barcode-preview"></svg>'
-        + '</div>';
-
-      // 바코드 생성
-      JsBarcode("#barcode-preview", id, {
-        format: "CODE128",
-        width: 2,
-        height: 50,
-        displayValue: true,
-        fontSize: 14,
-        margin: 10
-      });
-
-      document.getElementById('qrModal').classList.add('show');
-    }
-
-    // ════════════════════════════════════════
-    // QR 인쇄 (A4)
-    // ════════════════════════════════════════
-    function printAllQR() {
-      var list = allSeniors.filter(function (s) {
-        var ok1 = seniorSubjF === '전체' || s.subjects.indexOf(seniorSubjF) >= 0;
-        var ok2 = seniorStatF === '전체' || s.status === seniorStatF;
-        return ok1 && ok2;
-      });
-
-      if (!list.length) { alert('인쇄할 어르신이 없습니다.'); return; }
-
-      var win = window.open('', '_blank');
-      var now = new Date();
-      var dateStr = now.getFullYear() + '. ' + (now.getMonth() + 1) + '. ' + now.getDate() + '.';
-
-      var html = '<html><head><meta charset="UTF-8"><title>어르신 QR코드 인쇄</title>'
-        + '<style>'
-        + '@page { size: A4 portrait; margin: 10mm 10mm; }'
-        + '* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }'
-        + 'body { font-family: "Noto Sans KR", -apple-system, "Malgun Gothic", sans-serif; color: #333; background: #fff; }'
-        + '.hdr { text-align: center; margin-bottom: 5mm; }'
-        + '.hdr-title { font-size: 13pt; font-weight: bold; margin-bottom: 1mm; }'
-        + '.hdr-info { font-size: 9pt; color: #666; }'
-        + 'hr { border: 0; border-top: 1px solid #1b5e20; margin: 2mm 0 5mm 0; }'
-        + '.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm 4mm; }'
-        + '.qc { border: 1px solid #eee; background: #fff; border-radius: 8px; padding: 5mm 3mm; text-align: center; page-break-inside: avoid !important; break-inside: avoid !important; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65mm; max-height: 65mm; height: 65mm; box-sizing: border-box; position: relative; }'
-        + '.qi { width: 45mm !important; height: 45mm !important; max-width: 45mm; max-height: 45mm; margin: 0 auto 3mm auto; display: block; border: 1px solid #f5f5f5; background: #fff; object-fit: contain; }'
-        + '.nm { font-size: 13pt; font-weight: 900; color: #000; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }'
-        + '@media print { '
-        + '  body { background: #fff; }'
-        + '  .qc { page-break-inside: avoid !important; break-inside: avoid !important; }'
-        + '  .qi { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; }'
-        + '}'
-        + '</style></head><body>'
-        + '<div class="hdr">'
-        + '<div class="hdr-title">🎓 노인대학 출석 QR코드</div>'
-        + '<div class="hdr-info">' + dateStr + ' | 총 ' + list.length + '명</div>'
-        + '</div><hr>'
-        + '<div class="grid">'
-        + list.map(function (s) {
-          return '<div class="qc">'
-            + '<img src="' + s.qrCode + '" class="qi" alt="QR">'
-            + '<div class="nm">' + s.name + '</div>'
-            + '</div>';
-        }).join('')
-        + '</div><script>window.onload=function(){setTimeout(function(){window.print();},500);};<\/script></body></html>';
-
-      win.document.write(html);
-      win.document.close();
-    }
-    function dlQR() {
-      if (!qrInfo) return;
-      var apiOuter = 'https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=' + encodeURIComponent(qrInfo.id);
-
-      var img = new Image();
-      img.crossOrigin = 'Anonymous';
-      img.onload = function () {
-        var canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        var ctx = canvas.getContext('2d');
-        // JPG는 투명도를 지원하지 않으므로 배경을 흰색으로 채움
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-
-        var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        var a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = 'QR_' + qrInfo.id + '_' + qrInfo.name + '.jpg';
-        a.click();
-      };
-      img.onerror = function () {
-        // 캔버스 변환 실패 시 원본 링크 오픈 (fallback)
-        window.open(apiOuter, '_blank');
-      };
-      img.src = apiOuter;
-    }
-
-    function dlBarcode() {
-      if (!qrInfo) return;
-      var canvas = document.createElement('canvas');
-      JsBarcode(canvas, qrInfo.id, {
-        format: "CODE128",
-        width: 4,
-        height: 100,
-        displayValue: true,
-        fontSize: 20
-      });
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-      var a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = 'Barcode_' + qrInfo.id + '_' + qrInfo.name + '.jpg';
-      a.click();
-    }
-
-    function printAllBarcode() {
-      var list = allSeniors.filter(function (s) {
-        var ok1 = seniorSubjF === '전체' || s.subjects.indexOf(seniorSubjF) >= 0;
-        var ok2 = seniorStatF === '전체' || s.status === seniorStatF;
-        return ok1 && ok2;
-      });
-
-      if (!list.length) { alert('인쇄할 어르신이 없습니다.'); return; }
-
-      var win = window.open('', '_blank');
-      var now = new Date();
-      var dateStr = now.getFullYear() + '. ' + (now.getMonth() + 1) + '. ' + now.getDate() + '.';
-
-      var html = '<html><head><meta charset="UTF-8"><title>어르신 바코드 인쇄</title>'
-        + '<style>'
-        + '@page { size: A4 portrait; margin: 10mm 10mm; }'
-        + '* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }'
-        + 'body { font-family: "Noto Sans KR", -apple-system, "Malgun Gothic", sans-serif; color: #333; background: #fff; }'
-        + '.hdr { text-align: center; margin-bottom: 5mm; }'
-        + '.hdr-title { font-size: 13pt; font-weight: bold; margin-bottom: 1mm; }'
-        + '.hdr-info { font-size: 9pt; color: #666; }'
-        + 'hr { border: 0; border-top: 1px solid #1b5e20; margin: 2mm 0 5mm 0; }'
-        + '.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm 4mm; }'
-        + '.qc { border: 1px solid #eee; background: #fff; border-radius: 8px; padding: 5mm 3mm; text-align: center; page-break-inside: avoid !important; break-inside: avoid !important; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65mm; max-height: 65mm; height: 65mm; box-sizing: border-box; position: relative; }'
-        + '.bc-img { width: 45mm !important; height: 35mm !important; margin-bottom: 2mm; object-fit: contain; }'
-        + '.nm { font-size: 13pt; font-weight: 900; color: #000; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }'
-        + '@media print { body { background: #fff; } .qc { page-break-inside: avoid !important; break-inside: avoid !important; } }'
-        + '</style></head><body>'
-        + '<div class="hdr">'
-        + '<div class="hdr-title">🎓 노인대학 출석 바코드</div>'
-        + '<div class="hdr-info">' + dateStr + ' | 총 ' + list.length + '명</div>'
-        + '</div><hr>'
-        + '<div class="grid" id="bc-grid"></div>'
-        + '<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>'
-  + '
-  <script>'
-        + '  var list = ' + JSON.stringify(list) + ';'
-        + '  var grid = document.getElementById("bc-grid");'
-        + '  list.forEach(function(s) {'
-        + '    var div = document.createElement("div"); div.className = "qc";'
-        + '    var canvas = document.createElement("canvas"); canvas.className = "bc-img";'
-        + '    var nm = document.createElement("div"); nm.className = "nm"; nm.textContent = s.name;'
-        + '    div.appendChild(canvas); div.appendChild(nm); grid.appendChild(div);'
-        + '    JsBarcode(canvas, s.id, { format: "CODE128", width: 2.5, height: 60, displayValue: true, fontSize: 16 });'
-        + '  });'
-        + '  window.onload = function() { setTimeout(function() { window.print(); }, 1000); };'
-        + '</script>
-</body>
-
-</html>';
-
-win.document.write(html);
-win.document.close();
+  return { data, uniqueCount: uniqueSet.size, totalCount };
 }
 
-// ════════════════════════════════════════
-// 어르신 등록
-// ════════════════════════════════════════
-async function submitReg(e) {
-e.preventDefault();
-if (!regSubjs.length) { alert('수강 과목을 하나 이상 선택해 주세요.'); return; }
-var f = new FormData(e.target);
-var btn = e.target.querySelector('[type=submit]');
-btn.disabled = true; btn.textContent = '등록 중...';
-try {
-const r = await api('registerSenior', {
-name: f.get('name'),
-gender: f.get('gender'),
-contact: f.get('contact'),
-address: f.get('address'),
-subjects: regSubjs.slice(),
-emergencyContact: f.get('emergencyContact'),
-emergencyRelation: f.get('emergencyRelation')
-});
-alert('✅ ' + r.message);
-e.target.reset();
-regSubjs.length = 0;
-document.getElementById('subjTxt').textContent = '선택된 과목 없음';
-document.querySelectorAll('#subjTgl .tgl').forEach(function (b) { b.classList.remove('on'); });
-allSeniors = [];
-} catch (err) { alert('❌ ' + err.message); }
-btn.disabled = false; btn.textContent = '✅ 등록';
+// ============================================================
+// 출석부 시트 생성
+// ============================================================
+function generateAttendanceSheet(year, month, subjectName) {
+  const ss    = _ss();
+  const subSh = _sheet(SHEET.SUBJECTS);
+  const senSh = _sheet(SHEET.SENIORS);
+  const subLr = subSh.getLastRow();
+  const senLr = senSh.getLastRow();
+  if (subLr < 2) throw new Error('등록된 과목이 없습니다.');
+
+  const subRows = subSh.getRange(2, 1, subLr-1, HDR_SUBJECTS.length).getValues();
+  const subRow  = subRows.find(r => r[1] === subjectName);
+  if (!subRow)  throw new Error('과목을 찾을 수 없습니다: ' + subjectName);
+
+  const dayNums = _parseDays(subRow[2]);
+  const dates   = _datesInMonth(year, month, dayNums);
+  const dayNames = ['일','월','화','수','목','금','토'];
+
+  // ── 어르신 목록 ──────────────────────────────────────────
+  let seniors = [];
+  if (senLr >= 2) {
+    const senRows = senSh.getRange(2, 1, senLr-1, HDR_SENIORS.length).getValues();
+    seniors = senRows
+      .filter(r => r[8] === STATUS_ACTIVE &&
+                   String(r[5]||'').split(',').map(x=>x.trim()).includes(subjectName))
+      .map(r => ({ name: r[1], contact: r[3] || '' }));
+  }
+
+  // ── 시트 생성/초기화 ─────────────────────────────────────
+  const sheetName = '출석부_' + year + '_' + String(month).padStart(2,'0') + '_' + subjectName;
+  let out = ss.getSheetByName(sheetName);
+  if (out) {
+    // 기존 시트: 내용/서식 초기화 후 재사용
+    out.clearContents();
+    out.clearFormats();
+  } else {
+    // 새 시트 생성
+    out = ss.insertSheet(sheetName);
+  }
+  if (!out) throw new Error('시트 생성 실패: ' + sheetName);
+
+  // ── 열 구성 ──────────────────────────────────────────────
+  // A(1):이름  B(2):연락처  C(3)~:날짜
+  const dateCols  = dates.length;
+  const totalCols = 2 + dateCols;
+
+  // 결재란 위치: 날짜 열 끝 + 2 (빈칸 1열 띄움)
+  const apvBase = totalCols + 2;  // "결재" 열
+  // apvBase+1 ~ apvBase+5 : 담당/팀장/과장/부장/관장
+  const apvTitles = ['담당','팀장','과장','부장','관장'];
+
+  // ════════════════════════════════════════════════════════
+  // 1~3행: 제목 + 결재란
+  // 레이아웃:
+  //   A1       : "2026년 3월"
+  //   C1~끝    : "노래교실"
+  //   끝+1     : "출석부" (1~3행 병합)
+  //   apvBase  : "결\n재" (1~3행 병합)
+  //   apvBase+1~+5 : 담당/팀장/과장/부장/관장
+  //                  (1행:직위명, 2~3행:서명칸 병합)
+  // ════════════════════════════════════════════════════════
+
+  // A1: 연도/월
+  out.getRange(1, 1).setValue(year + '년 ' + month + '월')
+     .setFontSize(12).setFontWeight('bold')
+     .setHorizontalAlignment('center').setVerticalAlignment('middle');
+  out.getRange(1, 1, 3, 1).merge(); // A1:A3 병합
+
+  // B1~(totalCols)1 병합: 과목명
+  if (totalCols >= 2) {
+    out.getRange(1, 2, 1, totalCols - 1).merge()
+       .setValue(subjectName)
+       .setFontSize(12).setFontWeight('bold')
+       .setHorizontalAlignment('center').setVerticalAlignment('middle');
+  }
+
+  // (totalCols+1)열, 1~3행 병합: "출 석 부"
+  out.getRange(1, totalCols + 1, 3, 1).merge()
+     .setValue('출 석 부')
+     .setFontSize(14).setFontWeight('bold')
+     .setHorizontalAlignment('center').setVerticalAlignment('middle');
+
+  // apvBase열, 1~3행 병합: "결재"
+  out.getRange(1, apvBase, 3, 1).merge()
+     .setValue('결\n재')
+     .setFontSize(11).setFontWeight('bold')
+     .setHorizontalAlignment('center').setVerticalAlignment('middle')
+     .setBorder(true, true, true, true, true, true);
+
+  // 담당/팀장/과장/부장/관장
+  apvTitles.forEach(function(title, i) {
+    const col = apvBase + 1 + i;
+    // 1행: 직위명
+    out.getRange(1, col)
+       .setValue(title)
+       .setFontWeight('bold')
+       .setHorizontalAlignment('center').setVerticalAlignment('middle')
+       .setBorder(true, true, true, true, true, true);
+    // 2~3행: 서명 공간 (병합)
+    out.getRange(2, col, 2, 1).merge()
+       .setBorder(true, true, true, true, true, true);
+  });
+
+  // 행 높이 (1~3행)
+  out.setRowHeight(1, 30);
+  out.setRowHeight(2, 36);
+  out.setRowHeight(3, 36);
+
+  // ════════════════════════════════════════════════════════
+  // 4행: 요약 정보
+  // ════════════════════════════════════════════════════════
+  out.getRange(4, 1, 1, totalCols).merge()
+     .setValue(year + '년 ' + month + '월   ' + subjectName +
+               '   수업일수: ' + dateCols + '일   등록인원: ' + seniors.length + '명')
+     .setFontSize(10).setFontWeight('bold')
+     .setHorizontalAlignment('center').setVerticalAlignment('middle')
+     .setBackground('#E8F5E9')
+     .setBorder(true, true, true, true, false, false);
+  out.setRowHeight(4, 24);
+
+  // ════════════════════════════════════════════════════════
+  // 5행: 컬럼 헤더 (이름 | 연락처 | 날짜...)
+  // ════════════════════════════════════════════════════════
+  const HROW = 5;
+  const dateHdrs = dates.map(function(d) {
+    return d.getDate() + '일\n(' + dayNames[d.getDay()] + ')';
+  });
+  const allHdrs = ['이름', '연락처'].concat(dateHdrs);
+
+  out.getRange(HROW, 1, 1, allHdrs.length)
+     .setValues([allHdrs])
+     .setFontWeight('bold')
+     .setBackground('#2E7D32').setFontColor('#ffffff')
+     .setHorizontalAlignment('center').setVerticalAlignment('middle')
+     .setBorder(true, true, true, true, true, true)
+     .setWrap(true);
+  out.setRowHeight(HROW, 44);
+  try { out.setFrozenRows(HROW); } catch(e) {}    // 5행까지 고정
+  try { out.setFrozenColumns(2); } catch(e) {}    // 이름+연락처 고정
+
+  // ════════════════════════════════════════════════════════
+  // 6행~: 어르신 데이터
+  // ════════════════════════════════════════════════════════
+  if (seniors.length) {
+    const dataRows = seniors.map(function(s) {
+      return [s.name, s.contact].concat(Array(dateCols).fill(''));
+    });
+    const dataRng = out.getRange(HROW + 1, 1, seniors.length, allHdrs.length);
+    dataRng.setValues(dataRows)
+           .setHorizontalAlignment('center')
+           .setVerticalAlignment('middle')
+           .setBorder(true, true, true, true, true, true);
+
+    // 이름 열: 왼쪽 정렬
+    out.getRange(HROW + 1, 1, seniors.length, 1).setHorizontalAlignment('left');
+
+    // 짝수행 배경색 (가독성)
+    for (let i = 0; i < seniors.length; i++) {
+      out.getRange(HROW + 1 + i, 1, 1, allHdrs.length)
+         .setBackground(i % 2 === 0 ? '#ffffff' : '#F1F8F1');
+      out.setRowHeight(HROW + 1 + i, 26);
+    }
+  } else {
+    out.getRange(HROW + 1, 1, 1, totalCols).merge()
+       .setValue('등록된 수강생이 없습니다.')
+       .setHorizontalAlignment('center').setFontColor('#888888');
+  }
+
+  // ════════════════════════════════════════════════════════
+  // 열 너비
+  // ════════════════════════════════════════════════════════
+  out.setColumnWidth(1, 70);   // 이름
+  out.setColumnWidth(2, 115);  // 연락처
+  for (let c = 3; c <= allHdrs.length; c++) out.setColumnWidth(c, 40); // 날짜
+  out.setColumnWidth(totalCols + 1, 50);  // "출석부" 열
+  out.setColumnWidth(apvBase, 22);        // "결재" 열
+  apvTitles.forEach(function(_, i) {
+    out.setColumnWidth(apvBase + 1 + i, 72);
+  });
+
+  return {
+    success:   true,
+    sheetName: sheetName,
+    count:     seniors.length,
+    message:   '출석부 생성 완료 (' + seniors.length + '명, ' + dateCols + '일)'
+  };
 }
 
-// ════════════════════════════════════════
-// 일괄 등록
-// ════════════════════════════════════════
-function dlTemplate() {
-var ws = XLSX.utils.aoa_to_sheet([
-['이름', '성별', '연락처', '거주지(동)', '수강과목(쉼표구분)', '비상연락처', '관계'],
-['홍길동', '남', '010-1234-5678', '암사1동', '한글교실 (초급1),노래교실', '010-9999-8888', '자녀'],
-['김영희', '여', '010-9876-5432', '길동', '실버요가 1', '', '배우자']
-]);
-ws['!cols'] = [{ wch: 8 }, { wch: 5 }, { wch: 14 }, { wch: 10 }, { wch: 26 }, { wch: 14 }, { wch: 8 }];
-var wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb, ws, '등록');
-XLSX.writeFile(wb, '청춘캠퍼스_등록템플릿.xlsx');
+// ============================================================
+// doGet - WebApp 기본 응답 (CORS preflight 처리)
+// ============================================================
+function doGet(e) {
+  // 초기 설정
+  try {
+    if (!_ss().getSheetByName(SHEET.SENIORS)) initialSetup();
+  } catch(err) { Logger.log('doGet: ' + err.message); }
+
+  const action = e && e.parameter && e.parameter.action;
+
+  // action 파라미터가 있으면 API 응답
+  if (action) {
+    try {
+      const result = _dispatch(action, e.parameter);
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: true, ...result }))
+        .setMimeType(ContentService.MimeType.JSON);
+    } catch(err) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: false, message: err.message }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
+  // 기본: 안내 페이지
+  return ContentService
+    .createTextOutput(JSON.stringify({ success: true, message: '청춘캠퍼스 출석관리 API' }))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
-function handleDrop(e) {
-e.preventDefault();
-document.getElementById('fileDrop').classList.remove('drag');
-if (e.dataTransfer.files[0]) processExcel(e.dataTransfer.files[0]);
-}
-function handleBatch(e) { if (e.target.files[0]) processExcel(e.target.files[0]); }
-function processExcel(file) {
-var reader = new FileReader();
-reader.onload = function (ev) {
-var wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
-var json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-batchData = json.map(function (x) {
-return {
-name: x['이름'] || '',
-gender: x['성별'] || '',
-contact: x['연락처'] || '',
-address: x['거주지(동)'] || '',
-subjects: (x['수강과목(쉼표구분)'] || '').split(',').map(function (s) { return s.trim(); }).filter(Boolean),
-emergencyContact: x['비상연락처'] || '',
-emergencyRelation: x['관계'] || ''
-};
-}).filter(function (x) { return x.name; });
-showBatchPreview();
-};
-reader.readAsArrayBuffer(file);
-}
-function showBatchPreview() {
-var div = document.getElementById('batchPreview');
-var btn = document.getElementById('batchBtn');
-if (!batchData.length) {
-div.innerHTML = '<div class="al al-w">데이터 없음</div>';
-div.classList.remove('hidden'); btn.classList.add('hidden'); return;
-}
-div.innerHTML = '<div class="al al-s">등록 예정 <strong>' + batchData.length + '명</strong></div>'
-+ '<div class="tbl-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th>이름</th>
-        <th>성별</th>
-        <th>수강과목</th>
-      </tr>
-    </thead>
-    <tbody>'
-      + batchData.map(function (r) {
-      return '<tr>
-        <td>' + r.name + '</td>
-        <td>' + (r.gender || '-') + '</td>
-        <td>' + r.subjects.join(', ') + '</td>
-      </tr>';
-      }).join('') + '</tbody>
-  </table>
-</div>';
-div.classList.remove('hidden');
-btn.classList.remove('hidden');
-}
-async function submitBatch() {
-if (!batchData.length) return;
-if (!confirm(batchData.length + '명을 일괄 등록하시겠습니까?')) return;
-var btn = document.getElementById('batchBtn');
-btn.disabled = true; btn.textContent = '등록 중...';
-try {
-const r = await api('registerSeniorsBatch', { list: batchData });
-alert('✅ ' + r.message);
-batchData = [];
-document.getElementById('batchPreview').classList.add('hidden');
-btn.classList.add('hidden');
-document.getElementById('batchFile').value = '';
-allSeniors = [];
-} catch (err) { alert('❌ ' + err.message); }
-btn.disabled = false; btn.textContent = '✅ 일괄 등록';
+// ============================================================
+// doPost - 메인 API 엔드포인트
+// ============================================================
+function doPost(e) {
+  // CORS 허용 헤더
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    const body   = JSON.parse(e.postData.contents);
+    const action = body.action;
+    const params = body.params || {};
+
+    const result = _dispatch(action, params);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: true, ...result }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch(err) {
+    Logger.log('doPost error: ' + err.message);
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, message: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
 }
 
-// ════════════════════════════════════════
-// 수정·삭제
-// ════════════════════════════════════════
-async function loadManage() {
-var div = document.getElementById('manageList');
-if (allSeniors.length) { renderManage(allSeniors); return; }
-div.innerHTML = '<div class="ld">
-  <div class="spin"></div>
-</div>';
-try {
-const r = await api('getSeniors', {});
-allSeniors = r.data || [];
-renderManage(allSeniors);
-} catch (e) {
-div.innerHTML = '<div class="empty">' + e.message + '</div>';
+// ============================================================
+// 액션 디스패처
+// ============================================================
+function _dispatch(action, params) {
+  switch(action) {
+    case 'initialSetup':          return initialSetup();
+    case 'getSubjects':           return getSubjects();
+    case 'getSeniors':            return getSeniors();
+    case 'registerSenior':        return registerSenior(params);
+    case 'registerSeniorsBatch':  return registerSeniorsBatch(params.list);
+    case 'updateSenior':          return updateSenior(params.id, params.data);
+    case 'deleteSenior':          return deleteSenior(params.id);
+    case 'markAttendance':        return markAttendance(params.qrId, params.subjectName);
+    case 'getTodayStatus':        return getTodayStatus(params.subjectName);
+    case 'getAttendanceRecords':
+      return getAttendanceRecords(params.startDate, params.endDate, params.subjectName, params.keyword);
+    case 'getMonthlyStats':       return getMonthlyStats(params.year, params.month);
+    case 'generateAttendanceSheet':
+      return generateAttendanceSheet(params.year, params.month, params.subjectName);
+    default:
+      throw new Error('알 수 없는 action: ' + action);
+  }
 }
-}
-
-function renderManage(list) {
-var div = document.getElementById('manageList');
-if (!list.length) {
-div.innerHTML = '<div class="empty">
-  <div class="empty-ico">👥</div>등록된 어르신 없음
-</div>';
-return;
-}
-div.innerHTML = list.map(function (w) {
-return '<div style="display:flex;justify-content:space-between;align-items:center;'
-          + 'padding:10px 4px;border-bottom:1px solid var(--border)">'
-  + '<div>
-    <div style="font-weight:700;font-size:13px">' + w.name
-      + ' <span style="font-size:10px;color:var(--g3)">(' + w.id + ')</span>'
-      + ' <span class="bdg ' + (w.status === '활성' ? 'bdg-g' : 'bdg-gr') + '">' + w.status + '</span></div>'
-    + '<div class="txt-sm">' + w.subjects.join(', ') + '</div>
-  </div>'
-  + '<div style="display:flex;gap:4px">'
-    + '<button class="btn btn-o btn-sm" onclick="openEdit(\'' + w.id + '\')">✏️</button>'
-    + '<button class="btn btn-od btn-sm" onclick="quickDel(\'' + w.id + '\',\'' + w.name + '\')">🗑️</button>'
-    + '</div>
-</div>';
-}).join('');
-}
-
-function filterManage() {
-var q = document.getElementById('manageQ').value.toLowerCase();
-if (!q) { renderManage(allSeniors); return; }
-renderManage(allSeniors.filter(function (w) {
-return w.name.toLowerCase().includes(q) || w.id.toLowerCase().includes(q);
-}));
-}
-
-function openEdit(id) {
-var w = allSeniors.find(function (x) { return x.id === id; });
-if (!w) { alert('정보를 찾을 수 없습니다. 목록을 새로고침 해주세요.'); return; }
-editSenior = w;
-editSubjs = w.subjects.slice();
-document.getElementById('eId').value = w.id;
-document.getElementById('eName').value = w.name;
-document.getElementById('eGender').value = w.gender || '';
-document.getElementById('eContact').value = w.contact || '';
-document.getElementById('eAddress').value = w.address || '';
-document.getElementById('eEmergency').value = w.emergencyContact || '';
-document.getElementById('eRelation').value = w.emergencyRelation || '';
-document.getElementById('eStatus').value = w.status || '활성';
-buildSubjTgls('eTgl', editSubjs, 'edit');
-document.getElementById('eTxt').textContent =
-editSubjs.length ? '선택: ' + editSubjs.join(', ') : '선택된 과목 없음';
-document.getElementById('editModal').classList.add('show');
-}
-
-async function submitEdit(e) {
-e.preventDefault();
-try {
-await api('updateSenior', {
-id: editSenior.id,
-data: {
-name: document.getElementById('eName').value,
-gender: document.getElementById('eGender').value,
-contact: document.getElementById('eContact').value,
-address: document.getElementById('eAddress').value,
-subjects: editSubjs.slice(),
-emergencyContact: document.getElementById('eEmergency').value,
-emergencyRelation: document.getElementById('eRelation').value,
-status: document.getElementById('eStatus').value
-}
-});
-alert('✅ 수정 완료');
-closeModal('editModal');
-allSeniors = []; loadManage();
-} catch (err) { alert('❌ ' + err.message); }
-}
-
-async function doDelete() {
-if (!editSenior) return;
-if (!confirm(editSenior.name + ' 어르신을 삭제하시겠습니까?')) return;
-try {
-await api('deleteSenior', { id: editSenior.id });
-alert('✅ 삭제 완료');
-closeModal('editModal');
-allSeniors = []; loadManage();
-} catch (err) { alert('❌ ' + err.message); }
-}
-
-async function quickDel(id, name) {
-if (!confirm(name + ' 어르신을 삭제하시겠습니까?')) return;
-try {
-await api('deleteSenior', { id });
-alert('✅ 삭제 완료');
-allSeniors = []; loadManage();
-} catch (err) { alert('❌ ' + err.message); }
-}
-
-// ════════════════════════════════════════
-// 기록 조회
-// ════════════════════════════════════════
-async function searchRec() {
-var s = document.getElementById('recS').value;
-var e = document.getElementById('recE').value;
-if (!s || !e) { alert('시작일과 종료일을 선택해 주세요.'); return; }
-var div = document.getElementById('recResult');
-div.innerHTML = '<div class="ld">
-  <div class="spin"></div>
-</div>';
-try {
-const r = await api('getAttendanceRecords', {
-startDate: s,
-endDate: e,
-subjectName: document.getElementById('recSubj').value,
-keyword: document.getElementById('recKw').value
-});
-if (!r.data.length) {
-div.innerHTML = '<div class="empty">
-  <div class="empty-ico">📋</div>기록 없음
-</div>';
-return;
-}
-div.innerHTML = '<div class="tbl-wrap">
-  <table>
-    <thead>
-      <tr>'
-        + '<th>날짜</th>
-        <th>시간</th>
-        <th>이름</th>
-        <th>과목</th>
-      </tr>
-    </thead>
-    <tbody>'
-      + r.data.map(function (x) {
-      return '<tr>
-        <td>' + x.date + '</td>
-        <td>' + x.time + '</td>'
-        + '<td>' + x.seniorName + '<br><span class="txt-sm">' + x.seniorId + '</span></td>'
-        + '<td style="font-size:11px">' + x.subjectName + '</td>
-      </tr>';
-      }).join('') + '</tbody>
-  </table>
-</div>'
-+ '<div class="txt-sm mt1 txt-c">총 ' + r.data.length + '건</div>';
-} catch (err) {
-div.innerHTML = '<div class="empty">오류: ' + err.message + '</div>';
-}
-}
-
-// ════════════════════════════════════════
-// 통계
-// ════════════════════════════════════════
-async function loadStats() {
-var y = parseInt(document.getElementById('stYear').value);
-var m = parseInt(document.getElementById('stMonth').value);
-if (!y || !m) { alert('연도와 월을 입력해 주세요.'); return; }
-document.getElementById('statsHead').innerHTML = '<div class="ld">
-  <div class="spin"></div>
-</div>';
-document.getElementById('statsBody').innerHTML = '';
-try {
-const r = await api('getMonthlyStats', { year: y, month: m });
-document.getElementById('statsHead').innerHTML =
-'<div class="stat-row">'
-  + '<div class="stat stat-g">
-    <div class="stat-lbl">실인원</div>
-    <div class="stat-val">' + r.uniqueCount + '</div>
-  </div>'
-  + '<div class="stat stat-o">
-    <div class="stat-lbl">연인원</div>
-    <div class="stat-val">' + r.totalCount + '</div>
-  </div>'
-  + '</div>';
-if (!r.data.length) {
-document.getElementById('statsBody').innerHTML =
-'<div class="empty">
-  <div class="empty-ico">📊</div>데이터 없음
-</div>';
-return;
-}
-document.getElementById('statsBody').innerHTML =
-'<div class="tbl-wrap">
-  <table>
-    <thead>
-      <tr>'
-        + '<th>과목</th>
-        <th>요일</th>
-        <th>수업일</th>
-        <th>출석인원</th>
-      </tr>
-    </thead>
-    <tbody>'
-      + r.data.map(function (s) {
-      return '<tr>
-        <td style="font-size:11px">' + s.subjectName + '</td>'
-        + '<td style="font-size:11px">' + s.day + '</td>'
-        + '<td>' + s.totalSessions + '일</td>'
-        + '<td style="font-weight:700;color:var(--g2)">' + s.attendCount + '명</td>
-      </tr>';
-      }).join('') + '</tbody>
-  </table>
-</div>';
-} catch (err) {
-document.getElementById('statsHead').innerHTML = '<div class="empty">오류: ' + err.message + '</div>';
-}
-}
-
-async function exportStats() {
-var y = parseInt(document.getElementById('stYear').value);
-var m = parseInt(document.getElementById('stMonth').value);
-if (!y || !m) { alert('연도와 월을 입력해 주세요.'); return; }
-try {
-const r = await api('getMonthlyStats', { year: y, month: m });
-if (!r.data.length) { alert('데이터 없음'); return; }
-var ws = XLSX.utils.aoa_to_sheet([
-[y + '년 ' + m + '월 출석 통계', '', '', ''],
-['과목명', '요일', '수업일수', '출석인원'],
-...r.data.map(function (s) { return [s.subjectName, s.day, s.totalSessions, s.attendCount]; }),
-['', '', '실인원', r.uniqueCount],
-['', '', '연인원', r.totalCount]
-]);
-var wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb, ws, '통계');
-XLSX.writeFile(wb, '청춘캠퍼스_출석통계_' + y + '년' + m + '월.xlsx');
-} catch (err) { alert('오류: ' + err.message); }
-}
-
-async function makeSheet() {
-var y = parseInt(document.getElementById('shYear').value);
-var m = parseInt(document.getElementById('shMonth').value);
-var subj = document.getElementById('shSubj').value;
-if (!y || !m) { alert('연도와 월을 선택해 주세요.'); return; }
-if (!subj) { alert('과목을 선택해 주세요.'); return; }
-if (!confirm(y + '년 ' + m + '월 [' + subj + '] 출석부를 생성하시겠습니까?')) return;
-try {
-const r = await api('generateAttendanceSheet', { year: y, month: m, subjectName: subj });
-alert('✅ ' + r.message);
-} catch (err) { alert('❌ ' + err.message); }
-}
-
-// ════════════════════════════════════════
-// 모달 / 패널
-// ════════════════════════════════════════
-function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-
-function showRegPnl(name, btn) {
-document.querySelectorAll('.reg-pnl').forEach(function (p) { p.classList.remove('on'); });
-document.querySelectorAll('.reg-tab').forEach(function (t) { t.classList.remove('on'); });
-document.getElementById('reg-' + name).classList.add('on');
-btn.classList.add('on');
-if (name === 'manage') loadManage();
-}
-</script>
-</body>
-
-</html>
