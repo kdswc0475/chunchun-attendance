@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- JsBarcode: Code128 바코드 생성 라이브러리 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -40,8 +42,7 @@
       --nav: 68px;
     }
 
-    html,
-    body {
+    html, body {
       height: 100%;
       font-family: 'Noto Sans KR', sans-serif;
       background: var(--bg);
@@ -54,7 +55,6 @@
       overflow-x: hidden
     }
 
-    /* ── 헤더 ── */
     .hdr {
       background: var(--g2);
       color: #fff;
@@ -89,7 +89,6 @@
       font-weight: 500
     }
 
-    /* ── 하단 네비 ── */
     .nav {
       position: fixed;
       bottom: 0;
@@ -134,31 +133,18 @@
       transition: color .18s
     }
 
-    .nav-btn.active {
-      color: var(--g2)
-    }
+    .nav-btn.active { color: var(--g2) }
+    .nav-btn.active .nav-icon { background: var(--bg); color: var(--g2) }
 
-    .nav-btn.active .nav-icon {
-      background: var(--bg);
-      color: var(--g2)
-    }
-
-    /* ── 컨텐츠 ── */
     .wrap {
       max-width: 900px;
       margin: 0 auto;
       padding: 14px 13px
     }
 
-    .tab {
-      display: none
-    }
+    .tab { display: none }
+    .tab.on { display: block }
 
-    .tab.on {
-      display: block
-    }
-
-    /* ── 카드 ── */
     .card {
       background: var(--card);
       border-radius: var(--r);
@@ -178,7 +164,6 @@
       gap: 6px
     }
 
-    /* ── 통계 ── */
     .stat-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -192,38 +177,14 @@
       text-align: center
     }
 
-    .stat-g {
-      background: linear-gradient(135deg, var(--g2), var(--g4));
-      color: #fff
-    }
+    .stat-g { background: linear-gradient(135deg, var(--g2), var(--g4)); color: #fff }
+    .stat-b { background: linear-gradient(135deg, #1565C0, #42A5F5); color: #fff }
+    .stat-o { background: linear-gradient(135deg, var(--warn), #FFA000); color: #fff }
 
-    .stat-b {
-      background: linear-gradient(135deg, #1565C0, #42A5F5);
-      color: #fff
-    }
+    .stat-lbl { font-size: 11px; opacity: .85; margin-bottom: 2px; font-weight: 500 }
+    .stat-val { font-size: 28px; font-weight: 900; line-height: 1 }
 
-    .stat-o {
-      background: linear-gradient(135deg, var(--warn), #FFA000);
-      color: #fff
-    }
-
-    .stat-lbl {
-      font-size: 11px;
-      opacity: .85;
-      margin-bottom: 2px;
-      font-weight: 500
-    }
-
-    .stat-val {
-      font-size: 28px;
-      font-weight: 900;
-      line-height: 1
-    }
-
-    /* ── 폼 ── */
-    .fg {
-      margin-bottom: 11px
-    }
+    .fg { margin-bottom: 11px }
 
     .fl {
       display: block;
@@ -233,9 +194,7 @@
       margin-bottom: 4px
     }
 
-    .req {
-      color: var(--danger)
-    }
+    .req { color: var(--danger) }
 
     .fi {
       width: 100%;
@@ -249,10 +208,7 @@
       transition: border-color .15s
     }
 
-    .fi:focus {
-      outline: none;
-      border-color: var(--g3)
-    }
+    .fi:focus { outline: none; border-color: var(--g3) }
 
     .fr {
       display: grid;
@@ -260,7 +216,6 @@
       gap: 10px
     }
 
-    /* ── 버튼 ── */
     .btn {
       padding: 11px 16px;
       border: none;
@@ -276,51 +231,16 @@
       transition: opacity .15s, transform .1s
     }
 
-    .btn:active {
-      opacity: .82;
-      transform: scale(.98)
-    }
-
-    .btn:disabled {
-      opacity: .45;
-      cursor: not-allowed
-    }
-
-    .btn-p {
-      background: var(--g2);
-      color: #fff
-    }
-
-    .btn-b {
-      background: #1565C0;
-      color: #fff
-    }
-
-    .btn-d {
-      background: var(--danger);
-      color: #fff
-    }
-
-    .btn-o {
-      background: #fff;
-      border: 1.5px solid var(--g3);
-      color: var(--g2)
-    }
-
-    .btn-od {
-      background: #fff;
-      border: 1.5px solid var(--danger);
-      color: var(--danger)
-    }
-
-    .btn-w {
-      width: 100%
-    }
-
-    .btn-sm {
-      padding: 6px 10px;
-      font-size: 11px
-    }
+    .btn:active { opacity: .82; transform: scale(.98) }
+    .btn:disabled { opacity: .45; cursor: not-allowed }
+    .btn-p { background: var(--g2); color: #fff }
+    .btn-b { background: #1565C0; color: #fff }
+    .btn-d { background: var(--danger); color: #fff }
+    .btn-o { background: #fff; border: 1.5px solid var(--g3); color: var(--g2) }
+    .btn-od { background: #fff; border: 1.5px solid var(--danger); color: var(--danger) }
+    .btn-pur { background: #6A1B9A; color: #fff }
+    .btn-w { width: 100% }
+    .btn-sm { padding: 6px 10px; font-size: 11px }
 
     .btn-row {
       display: flex;
@@ -328,11 +248,8 @@
       margin-top: 10px
     }
 
-    .btn-row .btn {
-      flex: 1
-    }
+    .btn-row .btn { flex: 1 }
 
-    /* ── 토글 ── */
     .tgl-grp {
       display: flex;
       flex-wrap: wrap;
@@ -359,7 +276,6 @@
       font-weight: 700
     }
 
-    /* ── 배지 ── */
     .bdg {
       padding: 3px 9px;
       border-radius: 20px;
@@ -368,17 +284,9 @@
       display: inline-block
     }
 
-    .bdg-g {
-      background: #E8F5E9;
-      color: var(--g2)
-    }
+    .bdg-g { background: #E8F5E9; color: var(--g2) }
+    .bdg-gr { background: #F5F5F5; color: #757575 }
 
-    .bdg-gr {
-      background: #F5F5F5;
-      color: #757575
-    }
-
-    /* ── 알림 ── */
     .al {
       padding: 10px 13px;
       border-radius: var(--r3);
@@ -390,22 +298,11 @@
       line-height: 1.5
     }
 
-    .al-i {
-      background: #E3F2FD;
-      border-left: 3px solid #1565C0
-    }
+    .al-i { background: #E3F2FD; border-left: 3px solid #1565C0 }
+    .al-w { background: var(--warn-bg); border-left: 3px solid var(--warn) }
+    .al-s { background: #E8F5E9; border-left: 3px solid var(--g3) }
+    .al-p { background: #F3E5F5; border-left: 3px solid #6A1B9A }
 
-    .al-w {
-      background: var(--warn-bg);
-      border-left: 3px solid var(--warn)
-    }
-
-    .al-s {
-      background: #E8F5E9;
-      border-left: 3px solid var(--g3)
-    }
-
-    /* ══ API 설정 배너 ══ */
     .api-banner {
       background: linear-gradient(135deg, #E65100, #FF8F00);
       color: #fff;
@@ -417,21 +314,10 @@
       gap: 10px
     }
 
-    .api-banner-icon {
-      font-size: 1.5rem;
-      flex-shrink: 0
-    }
+    .api-banner-icon { font-size: 1.5rem; flex-shrink: 0 }
 
-    .api-banner-text {
-      font-size: 12px;
-      line-height: 1.6
-    }
-
-    .api-banner-text strong {
-      font-size: 13px;
-      display: block;
-      margin-bottom: 3px
-    }
+    .api-banner-text { font-size: 12px; line-height: 1.6 }
+    .api-banner-text strong { font-size: 13px; display: block; margin-bottom: 3px }
 
     .api-input {
       width: 100%;
@@ -444,7 +330,149 @@
       background: rgba(255, 255, 255, 0.9)
     }
 
-    /* ══ 스캔 탭 ══ */
+    /* ══ 스캔 모드 탭 ══ */
+    .scan-mode-tabs {
+      display: flex;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r3);
+      padding: 3px;
+      margin-bottom: 13px
+    }
+
+    .scan-mode-tab {
+      flex: 1;
+      padding: 9px 6px;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 6px;
+      font-family: inherit;
+      color: var(--text2);
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px
+    }
+
+    .scan-mode-tab.on {
+      background: #fff;
+      color: var(--g2);
+      box-shadow: var(--shadow)
+    }
+
+    /* ══ 바코드 스캐너 입력 영역 ══ */
+    .barcode-input-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--r);
+      padding: 20px 16px;
+      text-align: center;
+      background: var(--bg);
+      position: relative;
+      transition: all .2s
+    }
+
+    .barcode-input-area.active {
+      border-color: var(--g3);
+      border-style: solid;
+      background: #F0FFF0;
+      box-shadow: 0 0 0 3px rgba(56,142,60,0.12)
+    }
+
+    .barcode-input-area.focused {
+      border-color: var(--g2);
+      border-style: solid;
+      background: #E8F5E9
+    }
+
+    .barcode-icon {
+      font-size: 2.8rem;
+      margin-bottom: 8px;
+      display: block
+    }
+
+    .barcode-hint {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--g2);
+      margin-bottom: 4px
+    }
+
+    .barcode-hint-sub {
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 10px
+    }
+
+    #barcodeHiddenInput {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0
+    }
+
+    .barcode-manual-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px
+    }
+
+    .barcode-manual-row .fi {
+      border-radius: var(--r3);
+      font-size: 13px;
+      padding: 9px 10px
+    }
+
+    .barcode-manual-row .btn {
+      flex-shrink: 0;
+      white-space: nowrap
+    }
+
+    /* 바코드 스캐너 상태 표시기 */
+    .scanner-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 10px
+    }
+
+    .scanner-indicator.ready {
+      background: #E8F5E9;
+      color: var(--g2)
+    }
+
+    .scanner-indicator.waiting {
+      background: var(--warn-bg);
+      color: var(--warn)
+    }
+
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0
+    }
+
+    .indicator-dot.pulse {
+      animation: indicatorPulse 1.2s infinite
+    }
+
+    @keyframes indicatorPulse {
+      0%, 100% { opacity: 1; transform: scale(1) }
+      50% { opacity: 0.4; transform: scale(0.7) }
+    }
+
+    /* 스캔 영역 */
     .subj-sel {
       background: var(--bg);
       border: 1.5px solid var(--border);
@@ -472,9 +500,7 @@
       color: var(--text)
     }
 
-    .subj-sel select:focus {
-      outline: none
-    }
+    .subj-sel select:focus { outline: none }
 
     .scan-status {
       display: flex;
@@ -487,17 +513,9 @@
       font-weight: 700
     }
 
-    .scan-status.wait {
-      background: var(--warn-bg);
-      color: var(--warn)
-    }
+    .scan-status.wait { background: var(--warn-bg); color: var(--warn) }
+    .scan-status.live { background: #E8F5E9; color: var(--g2) }
 
-    .scan-status.live {
-      background: #E8F5E9;
-      color: var(--g2)
-    }
-
-    /* QR 리더 커스텀 */
     #qr-reader {
       border-radius: var(--r2);
       overflow: hidden;
@@ -506,22 +524,12 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
       position: relative;
       background: #000;
-      min-height: 350px;
-      /* 크기 확대 */
+      min-height: 350px
     }
 
-    #qr-reader video {
-      width: 100% !important;
-      height: auto !important;
-      object-fit: cover;
-    }
+    #qr-reader video { width: 100% !important; height: auto !important; object-fit: cover }
+    #qr-reader canvas { width: 100% !important; height: auto !important }
 
-    #qr-reader canvas {
-      width: 100% !important;
-      height: auto !important;
-    }
-
-    /* 스캔 레이저 라인 애니메이션 */
     #qr-reader::after {
       content: "";
       position: absolute;
@@ -533,36 +541,22 @@
       box-shadow: 0 0 10px var(--g5);
       z-index: 10;
       animation: scanning 2.5s infinite linear;
-      display: none;
+      display: none
     }
 
-    #qr-reader:not(.hidden)::after {
-      display: block;
-    }
+    #qr-reader:not(.hidden)::after { display: block }
 
     @keyframes scanning {
-      0% {
-        top: 0;
-      }
-
-      50% {
-        top: 100%;
-      }
-
-      100% {
-        top: 0;
-      }
+      0% { top: 0 }
+      50% { top: 100% }
+      100% { top: 0 }
     }
 
     #qr-reader__dashboard_section_swaplink,
-    #qr-reader__scan_region img {
-      display: none !important;
-    }
+    #qr-reader__scan_region img { display: none !important }
 
     #html5-qrcode-button-camera-stop,
-    #html5-qrcode-button-camera-start {
-      display: none !important;
-    }
+    #html5-qrcode-button-camera-start { display: none !important }
 
     .cam-btns {
       display: flex;
@@ -571,7 +565,6 @@
       margin-top: 10px
     }
 
-    /* 스캔 오버레이 */
     .overlay {
       position: fixed;
       inset: 0;
@@ -584,59 +577,21 @@
       text-align: center
     }
 
-    .overlay.show {
-      display: flex
-    }
+    .overlay.show { display: flex }
+    .overlay.ok { background: rgba(27, 94, 32, .94) }
+    .overlay.dup { background: rgba(21, 101, 192, .94) }
+    .overlay.err { background: rgba(183, 28, 28, .94) }
 
-    .overlay.ok {
-      background: rgba(27, 94, 32, .94)
-    }
-
-    .overlay.dup {
-      background: rgba(21, 101, 192, .94)
-    }
-
-    .overlay.err {
-      background: rgba(183, 28, 28, .94)
-    }
-
-    .ov-icon {
-      font-size: 4.5rem;
-      margin-bottom: 14px;
-      animation: pop .25s ease
-    }
-
-    .ov-name {
-      font-size: 2rem;
-      font-weight: 900;
-      color: #fff;
-      margin-bottom: 6px
-    }
-
-    .ov-msg {
-      font-size: 1.1rem;
-      color: rgba(255, 255, 255, .9);
-      margin-bottom: 4px
-    }
-
-    .ov-sub {
-      font-size: .9rem;
-      color: rgba(255, 255, 255, .7)
-    }
+    .ov-icon { font-size: 4.5rem; margin-bottom: 14px; animation: pop .25s ease }
+    .ov-name { font-size: 2rem; font-weight: 900; color: #fff; margin-bottom: 6px }
+    .ov-msg { font-size: 1.1rem; color: rgba(255, 255, 255, .9); margin-bottom: 4px }
+    .ov-sub { font-size: .9rem; color: rgba(255, 255, 255, .7) }
 
     @keyframes pop {
-      0% {
-        transform: scale(.6);
-        opacity: 0
-      }
-
-      100% {
-        transform: scale(1);
-        opacity: 1
-      }
+      0% { transform: scale(.6); opacity: 0 }
+      100% { transform: scale(1); opacity: 1 }
     }
 
-    /* 실시간 출석 카운터 */
     .att-count {
       background: linear-gradient(135deg, #FF6F00, #FFA000);
       border-radius: var(--r);
@@ -646,25 +601,10 @@
       display: none
     }
 
-    .att-count.show {
-      display: block
-    }
+    .att-count.show { display: block }
+    .att-count-num { font-size: 2.8rem; font-weight: 900; color: #fff; line-height: 1 }
+    .att-count-lbl { font-size: 12px; color: rgba(255, 255, 255, .85); margin-top: 4px; font-weight: 600 }
 
-    .att-count-num {
-      font-size: 2.8rem;
-      font-weight: 900;
-      color: #fff;
-      line-height: 1
-    }
-
-    .att-count-lbl {
-      font-size: 12px;
-      color: rgba(255, 255, 255, .85);
-      margin-top: 4px;
-      font-weight: 600
-    }
-
-    /* 쿨다운 배너 */
     .cooldown-bar {
       position: fixed;
       bottom: calc(var(--nav) + env(safe-area-inset-bottom) + 8px);
@@ -682,15 +622,9 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, .25)
     }
 
-    .cooldown-bar.show {
-      display: block
-    }
+    .cooldown-bar.show { display: block }
 
-    /* 오늘 현황 리스트 */
-    .rec-list {
-      max-height: 300px;
-      overflow-y: auto
-    }
+    .rec-list { max-height: 300px; overflow-y: auto }
 
     .rec-item {
       padding: 10px 4px;
@@ -700,20 +634,9 @@
       align-items: center
     }
 
-    .rec-item:last-child {
-      border-bottom: none
-    }
-
-    .rec-name {
-      font-weight: 700;
-      font-size: 13px
-    }
-
-    .rec-info {
-      font-size: 11px;
-      color: var(--text2);
-      margin-top: 2px
-    }
+    .rec-item:last-child { border-bottom: none }
+    .rec-name { font-weight: 700; font-size: 13px }
+    .rec-info { font-size: 11px; color: var(--text2); margin-top: 2px }
 
     /* ══ 등록 탭 ══ */
     .reg-tabs {
@@ -745,13 +668,8 @@
       box-shadow: var(--shadow)
     }
 
-    .reg-pnl {
-      display: none
-    }
-
-    .reg-pnl.on {
-      display: block
-    }
+    .reg-pnl { display: none }
+    .reg-pnl.on { display: block }
 
     .file-drop {
       border: 2px dashed var(--border);
@@ -762,24 +680,15 @@
       transition: all .2s
     }
 
-    .file-drop:hover,
-    .file-drop.drag {
+    .file-drop:hover, .file-drop.drag {
       border-color: var(--g3);
       background: var(--bg)
     }
 
-    .file-drop-ico {
-      font-size: 2.4rem;
-      margin-bottom: 6px
-    }
+    .file-drop-ico { font-size: 2.4rem; margin-bottom: 6px }
+    .file-drop-txt { font-size: 12px; color: var(--text3); font-weight: 500 }
 
-    .file-drop-txt {
-      font-size: 12px;
-      color: var(--text3);
-      font-weight: 500
-    }
-
-    /* ══ 어르신 목록 ══ */
+    /* ══ 어르신 카드 ══ */
     .s-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -812,21 +721,9 @@
       border: 1px solid var(--border)
     }
 
-    .sc-body {
-      padding: 11px 12px
-    }
-
-    .sc-name {
-      font-size: 15px;
-      font-weight: 900;
-      margin-bottom: 5px
-    }
-
-    .sc-info {
-      font-size: 11px;
-      color: var(--text2);
-      line-height: 1.8
-    }
+    .sc-body { padding: 11px 12px }
+    .sc-name { font-size: 15px; font-weight: 900; margin-bottom: 5px }
+    .sc-info { font-size: 11px; color: var(--text2); line-height: 1.8 }
 
     .sc-qr {
       padding: 10px 12px;
@@ -835,17 +732,59 @@
       text-align: center
     }
 
-    .sc-qr img {
+    .sc-qr img.qr-img {
       width: 76px;
       height: 76px;
       border-radius: 6px;
       margin-bottom: 5px
     }
 
+    /* 바코드 미리보기 */
+    .sc-barcode-preview {
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .sc-barcode-preview svg,
+    .sc-barcode-preview canvas {
+      max-width: 100%;
+      height: 48px;
+    }
+
     .sc-acts {
       display: flex;
-      gap: 5px;
+      gap: 4px;
+      justify-content: center;
+      flex-wrap: wrap
+    }
+
+    /* ══ 코드 타입 토글 ══ */
+    .code-type-toggle {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 8px;
       justify-content: center
+    }
+
+    .code-type-btn {
+      padding: 4px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #fff;
+      color: var(--text2);
+      font-family: inherit;
+      transition: all .15s
+    }
+
+    .code-type-btn.on {
+      background: var(--g2);
+      border-color: var(--g2);
+      color: #fff
     }
 
     /* ══ 테이블 ══ */
@@ -855,11 +794,7 @@
       border: 1px solid var(--border)
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px
-    }
+    table { width: 100%; border-collapse: collapse; font-size: 12px }
 
     thead th {
       background: var(--bg);
@@ -870,18 +805,9 @@
       color: var(--text2)
     }
 
-    tbody td {
-      padding: 9px 10px;
-      border-bottom: 1px solid var(--border)
-    }
-
-    tbody tr:last-child td {
-      border-bottom: none
-    }
-
-    tbody tr:hover td {
-      background: #FAFFF8
-    }
+    tbody td { padding: 9px 10px; border-bottom: 1px solid var(--border) }
+    tbody tr:last-child td { border-bottom: none }
+    tbody tr:hover td { background: #FAFFF8 }
 
     /* ══ 모달 ══ */
     .modal-bg {
@@ -897,10 +823,7 @@
       transition: all .22s
     }
 
-    .modal-bg.show {
-      opacity: 1;
-      visibility: visible
-    }
+    .modal-bg.show { opacity: 1; visibility: visible }
 
     .modal {
       background: #fff;
@@ -932,35 +855,46 @@
       padding: 0 4px
     }
 
-    /* ── 유틸 ── */
-    .hidden {
-      display: none !important
-    }
-
-    .mt1 {
-      margin-top: 8px
-    }
-
-    .mt2 {
-      margin-top: 14px
-    }
-
-    .mb1 {
-      margin-bottom: 8px
-    }
-
-    .mb2 {
+    /* QR/바코드 모달 탭 */
+    .qr-modal-tabs {
+      display: flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--r3);
+      padding: 3px;
       margin-bottom: 14px
     }
 
-    .txt-c {
-      text-align: center
+    .qr-modal-tab {
+      flex: 1;
+      padding: 7px;
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 6px;
+      font-family: inherit;
+      color: var(--text2);
+      transition: all .15s
     }
 
-    .txt-sm {
-      font-size: 11px;
-      color: var(--text2)
+    .qr-modal-tab.on {
+      background: #fff;
+      color: var(--g2);
+      box-shadow: var(--shadow)
     }
+
+    .qr-modal-pnl { display: none }
+    .qr-modal-pnl.on { display: block }
+
+    .hidden { display: none !important }
+    .mt1 { margin-top: 8px }
+    .mt2 { margin-top: 14px }
+    .mb1 { margin-bottom: 8px }
+    .mb2 { margin-bottom: 14px }
+    .txt-c { text-align: center }
+    .txt-sm { font-size: 11px; color: var(--text2) }
 
     .empty {
       text-align: center;
@@ -968,17 +902,9 @@
       color: var(--text3)
     }
 
-    .empty-ico {
-      font-size: 2.8rem;
-      opacity: .4;
-      margin-bottom: 8px
-    }
+    .empty-ico { font-size: 2.8rem; opacity: .4; margin-bottom: 8px }
 
-    .ld {
-      text-align: center;
-      padding: 24px;
-      color: var(--text2)
-    }
+    .ld { text-align: center; padding: 24px; color: var(--text2) }
 
     .spin {
       width: 30px;
@@ -990,31 +916,18 @@
       margin: 0 auto 8px
     }
 
-    @keyframes spin {
-      to {
-        transform: rotate(360deg)
-      }
-    }
+    @keyframes spin { to { transform: rotate(360deg) } }
 
     @media(max-width:580px) {
-      .fr {
-        grid-template-columns: 1fr
-      }
-
-      .btn-row {
-        flex-direction: column
-      }
-
-      .s-grid {
-        grid-template-columns: 1fr
-      }
+      .fr { grid-template-columns: 1fr }
+      .btn-row { flex-direction: column }
+      .s-grid { grid-template-columns: 1fr }
     }
   </style>
 </head>
 
 <body>
 
-  <!-- 헤더 -->
   <header class="hdr">
     <div class="hdr-inner">
       <div class="hdr-title">🌸 청춘캠퍼스 출석관리</div>
@@ -1024,7 +937,7 @@
 
   <div class="wrap">
 
-    <!-- ══ API 설정 (최초 1회) ══ -->
+    <!-- API 설정 -->
     <div id="apiSetup" class="api-banner hidden">
       <div class="api-banner-icon">⚙️</div>
       <div class="api-banner-text">
@@ -1038,12 +951,23 @@
     <!-- ══ TAB: 스캔 ══ -->
     <div id="tab-scan" class="tab on">
       <div class="card">
-        <div class="card-ttl">📷 QR 출석 체크</div>
+        <div class="card-ttl">📷 출석 체크</div>
 
+        <!-- 스캔 모드 선택 -->
+        <div class="scan-mode-tabs">
+          <button class="scan-mode-tab on" id="modeQR" onclick="setScanMode('qr')">
+            📷 QR 카메라
+          </button>
+          <button class="scan-mode-tab" id="modeBarcode" onclick="setScanMode('barcode')">
+            🔍 바코드 스캐너
+          </button>
+        </div>
+
+        <!-- 과목 선택 (공통) -->
         <div class="subj-sel">
           <label>📚 수업 과목 선택 <span class="req">*</span></label>
           <select id="scanSubj" onchange="onScanSubjChange()">
-            <option value="">-- 과목을 선택하면 카메라가 시작됩니다 --</option>
+            <option value="">-- 과목을 선택해 주세요 --</option>
           </select>
         </div>
 
@@ -1051,25 +975,59 @@
           <span>⚠️</span><span id="scanStatusTxt">과목을 먼저 선택해 주세요</span>
         </div>
 
-        <div id="qr-reader" class="hidden"></div>
-
-        <div class="cam-btns mt1">
-          <div style="display:flex;gap:6px">
-            <button class="tgl btn-sm on" id="camBack" onclick="setCamera('back')">📷 후면</button>
-            <button class="tgl btn-sm" id="camFront" onclick="setCamera('front')">🤳 전면</button>
+        <!-- QR 스캔 영역 -->
+        <div id="qrScanArea">
+          <div id="qr-reader" class="hidden"></div>
+          <div class="cam-btns mt1">
+            <div style="display:flex;gap:6px">
+              <button class="tgl btn-sm on" id="camBack" onclick="setCamera('back')">📷 후면</button>
+              <button class="tgl btn-sm" id="camFront" onclick="setCamera('front')">🤳 전면</button>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="voiceOn" checked style="width:16px;height:16px">
+              <label for="voiceOn" style="font-size:12px;font-weight:600;cursor:pointer">🔊 음성</label>
+            </div>
           </div>
-          <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-            <input type="checkbox" id="voiceOn" checked style="width:16px;height:16px">
-            <label for="voiceOn" style="font-size:12px;font-weight:600;cursor:pointer">🔊 음성</label>
+          <div class="btn-row mt2">
+            <button class="btn btn-p hidden" id="btnStart" onclick="startScan()">📷 카메라 시작</button>
+            <button class="btn btn-o hidden" id="btnStop" onclick="stopScan()">⏹ 중지</button>
           </div>
         </div>
 
-        <div class="btn-row mt2">
-          <button class="btn btn-p hidden" id="btnStart" onclick="startScan()">📷 카메라 시작</button>
-          <button class="btn btn-o hidden" id="btnStop" onclick="stopScan()">⏹ 중지</button>
+        <!-- 바코드 스캐너 영역 -->
+        <div id="barcodeScanArea" class="hidden">
+          <div class="al al-p mb1">
+            <span>💡</span>
+            <div>
+              <strong>NLS-HR11 Plus 연결 방법</strong><br>
+              USB 케이블로 PC에 연결 → USB HID-KBW 모드(기본값)로 자동 인식됩니다.<br>
+              과목 선택 후 아래 영역을 터치/클릭하면 스캐너가 활성화됩니다.
+            </div>
+          </div>
+
+          <div class="barcode-input-area" id="barcodeInputArea" onclick="focusBarcodeInput()">
+            <input type="text" id="barcodeHiddenInput" 
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+              placeholder="">
+            <div id="barcodeIndicator" class="scanner-indicator waiting" style="margin:0 auto 10px auto">
+              <span class="indicator-dot pulse"></span>
+              <span id="barcodeIndicatorTxt">과목 선택 후 활성화됩니다</span>
+            </div>
+            <span class="barcode-icon">🔍</span>
+            <div class="barcode-hint" id="barcodeHint">바코드 스캐너를 대기 중입니다</div>
+            <div class="barcode-hint-sub">이 영역을 터치하면 스캐너가 활성화됩니다</div>
+          </div>
+
+          <!-- 수동 입력 (바코드 스캐너 없을 때 대비) -->
+          <div class="barcode-manual-row mt2">
+            <input type="text" class="fi" id="manualBarcodeInput" placeholder="수동 입력: ID 직접 입력" 
+              style="flex:1">
+            <button class="btn btn-p" onclick="submitManualBarcode()">확인</button>
+          </div>
+          <div class="txt-sm mt1" style="text-align:center">※ 스캐너가 없을 때 ID를 직접 입력할 수 있습니다</div>
         </div>
 
-        <!-- 실시간 출석 카운터 -->
+        <!-- 출석 카운터 (공통) -->
         <div class="att-count" id="attCount">
           <div class="att-count-num" id="attCountNum">0</div>
           <div class="att-count-lbl" id="attCountLbl">명 출석 완료</div>
@@ -1168,8 +1126,7 @@
             <button type="submit" class="btn btn-p btn-w mt2">✅ 등록</button>
             <div class="al al-i mt1" style="margin-bottom:0">
               <span>💡</span>
-              <div>등록 시 <strong>활성</strong> 상태로 저장됩니다. 학기 종료 후 수강을 못하는 경우 수정·삭제 메뉴에서 <strong>비활성</strong>으로 변경하면 DB가
-                유지됩니다.</div>
+              <div>등록 시 <strong>활성</strong> 상태로 저장됩니다. 학기 종료 후 수강을 못하는 경우 수정·삭제 메뉴에서 <strong>비활성</strong>으로 변경하면 DB가 유지됩니다.</div>
             </div>
           </form>
         </div>
@@ -1198,9 +1155,7 @@
             <input type="text" class="fi" id="manageQ" placeholder="🔍 이름 또는 ID 검색" oninput="filterManage()">
           </div>
           <div id="manageList">
-            <div class="ld">
-              <div class="spin"></div>
-            </div>
+            <div class="ld"><div class="spin"></div></div>
           </div>
         </div>
       </div>
@@ -1210,8 +1165,9 @@
     <div id="tab-seniors" class="tab">
       <div class="card">
         <div class="card-ttl">👥 어르신 목록
-          <div style="margin-left:auto;display:flex;gap:4px">
+          <div style="margin-left:auto;display:flex;gap:4px;flex-wrap:wrap">
             <button class="btn btn-o btn-sm" onclick="printAllQR()">🖨️ QR 인쇄</button>
+            <button class="btn btn-pur btn-sm" onclick="printAllBarcode()">🖨️ 바코드 인쇄</button>
           </div>
           <span class="bdg bdg-g" id="seniorCount">0명</span>
         </div>
@@ -1224,9 +1180,7 @@
           <button class="tgl btn-sm" onclick="filterSeniorStat('비활성',this)">비활성</button>
         </div>
         <div id="seniorList">
-          <div class="ld">
-            <div class="spin"></div>불러오는 중...
-          </div>
+          <div class="ld"><div class="spin"></div>불러오는 중...</div>
         </div>
       </div>
     </div>
@@ -1241,9 +1195,7 @@
         </div>
         <div class="fr mb1">
           <div class="fg"><label class="fl">과목</label>
-            <select class="fi" id="recSubj">
-              <option value="">전체</option>
-            </select>
+            <select class="fi" id="recSubj"><option value="">전체</option></select>
           </div>
           <div class="fg"><label class="fl">이름/ID 검색</label>
             <input type="text" class="fi" id="recKw" placeholder="검색어">
@@ -1264,18 +1216,10 @@
           </div>
           <div class="fg"><label class="fl">월</label>
             <select class="fi" id="stMonth">
-              <option value="1">1월</option>
-              <option value="2">2월</option>
-              <option value="3">3월</option>
-              <option value="4">4월</option>
-              <option value="5">5월</option>
-              <option value="6">6월</option>
-              <option value="7">7월</option>
-              <option value="8">8월</option>
-              <option value="9">9월</option>
-              <option value="10">10월</option>
-              <option value="11">11월</option>
-              <option value="12">12월</option>
+              <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+              <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+              <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+              <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
             </select>
           </div>
         </div>
@@ -1298,26 +1242,16 @@
           </div>
           <div class="fg"><label class="fl">월</label>
             <select class="fi" id="shMonth">
-              <option value="1">1월</option>
-              <option value="2">2월</option>
-              <option value="3">3월</option>
-              <option value="4">4월</option>
-              <option value="5">5월</option>
-              <option value="6">6월</option>
-              <option value="7">7월</option>
-              <option value="8">8월</option>
-              <option value="9">9월</option>
-              <option value="10">10월</option>
-              <option value="11">11월</option>
-              <option value="12">12월</option>
+              <option value="1">1월</option><option value="2">2월</option><option value="3">3월</option>
+              <option value="4">4월</option><option value="5">5월</option><option value="6">6월</option>
+              <option value="7">7월</option><option value="8">8월</option><option value="9">9월</option>
+              <option value="10">10월</option><option value="11">11월</option><option value="12">12월</option>
             </select>
           </div>
         </div>
         <div class="fg mb1">
           <label class="fl">과목</label>
-          <select class="fi" id="shSubj">
-            <option value="">-- 선택 --</option>
-          </select>
+          <select class="fi" id="shSubj"><option value="">-- 선택 --</option></select>
         </div>
         <button class="btn btn-p btn-w" onclick="makeSheet()">📄 출석부 생성</button>
       </div>
@@ -1425,33 +1359,48 @@
     </div>
   </div>
 
-  <!-- QR 모달 -->
+  <!-- QR / 바코드 모달 -->
   <div class="modal-bg" id="qrModal">
     <div class="modal txt-c">
-      <div class="modal-ttl" style="justify-content:center">QR 코드
+      <div class="modal-ttl" style="justify-content:center">코드 보기
         <button class="modal-x" onclick="closeModal('qrModal')">×</button>
       </div>
-      <div id="qrContent"></div>
-      <div class="btn-row mt2">
-        <button class="btn btn-b" onclick="dlQR()">📥 QR 저장</button>
-        <button class="btn btn-o" onclick="closeModal('qrModal')">닫기</button>
+
+      <!-- 탭 선택 -->
+      <div class="qr-modal-tabs">
+        <button class="qr-modal-tab on" id="modalTabQR" onclick="switchModalTab('qr')">📱 QR코드</button>
+        <button class="qr-modal-tab" id="modalTabBC" onclick="switchModalTab('barcode')">🔍 바코드</button>
+      </div>
+
+      <!-- QR 패널 -->
+      <div class="qr-modal-pnl on" id="modalPnlQR">
+        <div id="qrContent"></div>
+        <div class="btn-row mt2">
+          <button class="btn btn-b" onclick="dlQR()">📥 QR 저장</button>
+          <button class="btn btn-o" onclick="closeModal('qrModal')">닫기</button>
+        </div>
+      </div>
+
+      <!-- 바코드 패널 -->
+      <div class="qr-modal-pnl" id="modalPnlBC">
+        <div id="barcodeContent"></div>
+        <div class="btn-row mt2">
+          <button class="btn btn-pur" onclick="dlBarcode()">📥 바코드 저장</button>
+          <button class="btn btn-o" onclick="closeModal('qrModal')">닫기</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     // ════════════════════════════════════════
-    // API 설정 - 스프레드시트 ID 고정
+    // API 설정
     // ════════════════════════════════════════
-    // Apps Script는 스프레드시트에 컨테이너 바인딩으로 배포됨
-    // doGet?action=getUrl 로 배포 URL 자동 조회 후 캐싱
     var API_URL = localStorage.getItem('cc_api_url') || '';
     var SPREADSHEET_ID = '1I5AbSuquBK_ThRk2E6lqLccvXmv2Eh40XzztwMTWtgg';
 
-    // Apps Script API 호출 (fetch POST)
     async function api(action, params) {
       if (!API_URL) {
-        // 저장된 URL 없으면 배너 표시
         document.getElementById('apiSetup').classList.remove('hidden');
         throw new Error('Apps Script URL을 먼저 설정해 주세요.');
       }
@@ -1488,6 +1437,7 @@
     var editSubjs = [];
     var editSenior = null;
     var qrInfo = null;
+    var barcodeInfo = null;
     var seniorSubjF = '전체';
     var seniorStatF = '전체';
 
@@ -1497,7 +1447,13 @@
     var camFacing = 'environment';
     var cooldown = false;
     var scanSubj = '';
-    var scanCount = 0;  // 이번 과목 세션 출석 카운터
+    var scanCount = 0;
+    var currentScanMode = 'qr'; // 'qr' | 'barcode'
+
+    // 바코드 스캐너 관련
+    var barcodeBuffer = '';
+    var barcodeTimer = null;
+    var BARCODE_TIMEOUT = 80; // ms — HID 키보드 입력이 빠르므로 80ms 내 입력을 하나의 스캔으로 처리
 
     // ════════════════════════════════════════
     // 초기화
@@ -1515,19 +1471,20 @@
       document.getElementById('recS').value = td;
       document.getElementById('recE').value = td;
 
-      // API URL 확인 - localStorage에 저장된 URL 있으면 바로 시작
       if (API_URL) {
         init();
       } else {
         document.getElementById('apiSetup').classList.remove('hidden');
       }
 
-      // 과목 토글은 고정 목록으로 즉시 렌더링 (API 연결 전에도 표시)
       buildSubjTgls('subjTgl', regSubjs, 'reg');
       buildSubjFilter();
       buildRecSubjSel();
       buildShSubjSel();
       buildScanSubjSel();
+
+      // 바코드 스캐너 HID 입력 처리
+      setupBarcodeInput();
 
       // 화면 회전 → 카메라 재시작
       var rotTimer = null;
@@ -1539,7 +1496,6 @@
       window.addEventListener('orientationchange', onRotate);
       if (screen.orientation) screen.orientation.addEventListener('change', onRotate);
 
-      // 모달 배경 클릭
       document.querySelectorAll('.modal-bg').forEach(function (el) {
         el.addEventListener('click', function (e) { if (e.target === el) el.classList.remove('show'); });
       });
@@ -1556,7 +1512,6 @@
         const r = await api('getSubjects', {});
         if (r.data && r.data.length) {
           allSubjects = r.data;
-          // 서버 과목으로 UI 갱신
           buildScanSubjSel();
           buildSubjTgls('subjTgl', regSubjs, 'reg');
           buildSubjFilter();
@@ -1567,7 +1522,157 @@
       } catch (e) {
         console.error('init error:', e);
       }
+    }
 
+    // ════════════════════════════════════════
+    // 스캔 모드 전환 (QR ↔ 바코드)
+    // ════════════════════════════════════════
+    function setScanMode(mode) {
+      currentScanMode = mode;
+      document.getElementById('modeQR').classList.toggle('on', mode === 'qr');
+      document.getElementById('modeBarcode').classList.toggle('on', mode === 'barcode');
+      document.getElementById('qrScanArea').classList.toggle('hidden', mode !== 'qr');
+      document.getElementById('barcodeScanArea').classList.toggle('hidden', mode !== 'barcode');
+
+      if (mode !== 'qr' && isScanning) stopScan();
+      if (mode === 'barcode') {
+        updateBarcodeUI();
+      }
+    }
+
+    // ════════════════════════════════════════
+    // 바코드 스캐너 HID 처리
+    // ════════════════════════════════════════
+    function setupBarcodeInput() {
+      var hidInput = document.getElementById('barcodeHiddenInput');
+
+      // 방법 1: 숨겨진 input에 포커스 유지 → HID 스캐너 입력 수신
+      hidInput.addEventListener('input', function (e) {
+        if (currentScanMode !== 'barcode' || !scanSubj) return;
+        clearTimeout(barcodeTimer);
+        barcodeBuffer = hidInput.value;
+        // 스캐너는 마지막에 Enter(CR)를 보냄 → 바로 처리
+        barcodeTimer = setTimeout(function () {
+          var code = barcodeBuffer.replace(/[\r\n]/g, '').trim();
+          barcodeBuffer = '';
+          hidInput.value = '';
+          if (code) processScannedCode(code);
+        }, BARCODE_TIMEOUT);
+      });
+
+      hidInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          clearTimeout(barcodeTimer);
+          var code = barcodeBuffer.replace(/[\r\n]/g, '').trim();
+          if (!code) code = hidInput.value.replace(/[\r\n]/g, '').trim();
+          barcodeBuffer = '';
+          hidInput.value = '';
+          if (code && currentScanMode === 'barcode' && scanSubj) {
+            processScannedCode(code);
+          }
+        }
+      });
+
+      // 방법 2: 전역 키보드 이벤트 — 바코드 모드일 때 어디서든 입력 수신
+      document.addEventListener('keydown', function (e) {
+        if (currentScanMode !== 'barcode' || !scanSubj) return;
+        // 이미 input/textarea에 포커스된 경우 제외 (수동입력 구분)
+        var tag = (document.activeElement || {}).tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        
+        if (e.key === 'Enter') {
+          clearTimeout(barcodeTimer);
+          var code = barcodeBuffer.trim();
+          barcodeBuffer = '';
+          if (code) processScannedCode(code);
+        } else if (e.key.length === 1) {
+          barcodeBuffer += e.key;
+          clearTimeout(barcodeTimer);
+          barcodeTimer = setTimeout(function () {
+            var code = barcodeBuffer.trim();
+            barcodeBuffer = '';
+            if (code) processScannedCode(code);
+          }, BARCODE_TIMEOUT);
+        }
+      });
+    }
+
+    function focusBarcodeInput() {
+      if (!scanSubj) {
+        alert('과목을 먼저 선택해 주세요.');
+        return;
+      }
+      var hidInput = document.getElementById('barcodeHiddenInput');
+      hidInput.focus();
+      document.getElementById('barcodeInputArea').classList.add('focused');
+    }
+
+    function updateBarcodeUI() {
+      var indicator = document.getElementById('barcodeIndicator');
+      var indicatorTxt = document.getElementById('barcodeIndicatorTxt');
+      var hint = document.getElementById('barcodeHint');
+      var area = document.getElementById('barcodeInputArea');
+
+      if (scanSubj) {
+        indicator.className = 'scanner-indicator ready';
+        indicator.querySelector('.indicator-dot').classList.add('pulse');
+        indicatorTxt.textContent = '스캐너 대기 중: ' + scanSubj;
+        hint.textContent = '바코드를 스캐너로 읽어 주세요';
+        area.classList.add('active');
+      } else {
+        indicator.className = 'scanner-indicator waiting';
+        indicatorTxt.textContent = '과목 선택 후 활성화됩니다';
+        hint.textContent = '바코드 스캐너를 대기 중입니다';
+        area.classList.remove('active');
+        area.classList.remove('focused');
+      }
+    }
+
+    function submitManualBarcode() {
+      var input = document.getElementById('manualBarcodeInput');
+      var code = input.value.trim();
+      if (!code) { alert('ID를 입력해 주세요.'); return; }
+      if (!scanSubj) { alert('과목을 먼저 선택해 주세요.'); return; }
+      input.value = '';
+      processScannedCode(code);
+    }
+
+    // ════════════════════════════════════════
+    // 공통 스캔 처리 (QR + 바코드 공유)
+    // ════════════════════════════════════════
+    async function processScannedCode(code) {
+      if (cooldown || !scanSubj) return;
+      cooldown = true;
+
+      var cdBar = document.getElementById('cooldownBar');
+      cdBar.classList.add('show');
+
+      try {
+        const r = await api('markAttendance', { qrId: code, subjectName: scanSubj });
+        var timeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        if (r.alreadyDone) {
+          showOverlay('dup', '🔔', r.name, '이미 출석 완료', scanSubj, timeStr);
+          speak(r.name + '님은 이미 출석하셨습니다');
+        } else {
+          scanCount++;
+          updateScanCount();
+          showOverlay('ok', '✅', r.name, '출석 완료!', scanSubj, timeStr);
+          speak(r.name + '님, 출석하셨습니다');
+        }
+        loadTodayStatus(scanSubj);
+      } catch (e) {
+        showOverlay('err', '❌', '', e.message || '오류', '', '');
+        speak('확인이 필요합니다');
+      }
+
+      setTimeout(function () {
+        hideOverlay();
+        cooldown = false;
+        cdBar.classList.remove('show');
+        if (currentScanMode === 'qr') {
+          try { if (scanner && isScanning) scanner.resume(); } catch (e) { }
+        }
+      }, 2500);
     }
 
     // ════════════════════════════════════════
@@ -1587,8 +1692,6 @@
     // ════════════════════════════════════════
     // 과목 헬퍼
     // ════════════════════════════════════════
-
-    // 고정 과목 목록 (서버 데이터가 없어도 바로 사용)
     var FIXED_SUBJECTS = [
       { subjectName: '한글교실 (초급1)', day: '수,금', useStatus: '사용' },
       { subjectName: '한글교실 (초급2)', day: '수,금', useStatus: '사용' },
@@ -1603,7 +1706,6 @@
       { subjectName: '노래교실', day: '금', useStatus: '사용' }
     ];
 
-    // 서버에서 받은 과목이 있으면 우선 사용, 없으면 고정 목록 사용
     function activeSubjs() {
       var src = allSubjects.length ? allSubjects : FIXED_SUBJECTS;
       return src.filter(function (s) { return s.useStatus === '사용'; });
@@ -1625,7 +1727,7 @@
     function buildScanSubjSel() {
       var sel = document.getElementById('scanSubj');
       var list = todaySubjs();
-      sel.innerHTML = '<option value="">-- 과목을 선택하면 카메라가 시작됩니다 --</option>';
+      sel.innerHTML = '<option value="">-- 과목을 선택해 주세요 --</option>';
       if (!list.length) {
         sel.innerHTML += '<option value="" disabled>오늘 수업이 없습니다</option>';
       }
@@ -1703,12 +1805,13 @@
       scanCount = 0;
       updateScanCount();
       if (scanSubj) {
-        setTimeout(startScan, 200);
+        if (currentScanMode === 'qr') setTimeout(startScan, 200);
         loadTodayStatus(scanSubj);
       } else {
         setScanWait('과목을 먼저 선택해 주세요');
         loadTodayStatus('');
       }
+      if (currentScanMode === 'barcode') updateBarcodeUI();
     }
 
     function setCamera(type) {
@@ -1723,6 +1826,7 @@
       el.className = 'scan-status wait';
       document.getElementById('scanStatusTxt').textContent = msg;
     }
+
     function setScanLive(subj) {
       var el = document.getElementById('scanStatus');
       el.className = 'scan-status live';
@@ -1743,7 +1847,7 @@
       scanner.start(
         { facingMode: camFacing },
         {
-          fps: 20, // 스캔 속도 향상
+          fps: 20,
           qrbox: function (w, h) { var s = Math.floor(Math.min(w, h) * 0.8); return { width: s, height: s }; },
           aspectRatio: isLand ? 16 / 9 : 4 / 3,
           videoConstraints: {
@@ -1752,7 +1856,7 @@
             height: { min: 480, ideal: 720, max: 1080 }
           }
         },
-        onQR,
+        function (text) { onQR(text); },
         function () { }
       ).then(function () {
         isScanning = true;
@@ -1763,7 +1867,7 @@
         document.getElementById('btnStart').classList.remove('hidden');
         document.getElementById('btnStop').classList.add('hidden');
         var msg = '카메라 오류';
-        if (String(err).indexOf('NotAllowedError') >= 0) msg = '카메라 권한을 허용해 주세요 (브라우저 설정 → 카메라 허용)';
+        if (String(err).indexOf('NotAllowedError') >= 0) msg = '카메라 권한을 허용해 주세요';
         else if (String(err).indexOf('NotFoundError') >= 0) msg = '카메라를 찾을 수 없습니다';
         else if (String(err).indexOf('NotReadableError') >= 0) msg = '카메라가 다른 앱에서 사용 중입니다';
         setScanWait('⚠️ ' + msg);
@@ -1782,48 +1886,16 @@
     }
 
     async function onQR(text) {
-      if (cooldown || !scanSubj) return;
-      cooldown = true;
-
-      // 쿨다운 배너 표시
-      var cdBar = document.getElementById('cooldownBar');
-      cdBar.classList.add('show');
-
+      if (cooldown) return;
       try { if (scanner) scanner.pause(); } catch (e) { }
-
-      try {
-        const r = await api('markAttendance', { qrId: text.trim(), subjectName: scanSubj });
-        var timeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        if (r.alreadyDone) {
-          showOverlay('dup', '🔔', r.name, '이미 출석 완료', scanSubj, timeStr);
-          speak(r.name + '님은 이미 출석하셨습니다');
-        } else {
-          scanCount++;
-          updateScanCount();
-          showOverlay('ok', '✅', r.name, '출석 완료!', scanSubj, timeStr);
-          speak(r.name + '님, 출석하셨습니다');
-        }
-        loadTodayStatus(scanSubj);
-      } catch (e) {
-        showOverlay('err', '❌', '', e.message || '오류', '', '');
-        speak('확인이 필요합니다');
-      }
-
-      setTimeout(function () {
-        hideOverlay();
-        cooldown = false;
-        cdBar.classList.remove('show');
-        try { if (scanner && isScanning) scanner.resume(); } catch (e) { }
-      }, 2500);
+      await processScannedCode(text.trim());
     }
 
     function updateScanCount() {
       var box = document.getElementById('attCount');
-      var num = document.getElementById('attCountNum');
-      var lbl = document.getElementById('attCountLbl');
       if (scanCount > 0) {
-        num.textContent = scanCount;
-        lbl.textContent = (scanSubj || '') + ' · ' + scanCount + '명 출석 완료';
+        document.getElementById('attCountNum').textContent = scanCount;
+        document.getElementById('attCountLbl').textContent = (scanSubj || '') + ' · ' + scanCount + '명 출석 완료';
         box.classList.add('show');
       } else {
         box.classList.remove('show');
@@ -1840,6 +1912,7 @@
       document.getElementById('ovTime').textContent = time || '';
       if (navigator.vibrate) navigator.vibrate(type === 'ok' ? 100 : [80, 40, 80]);
     }
+
     function hideOverlay() { document.getElementById('overlay').className = 'overlay'; }
 
     // ════════════════════════════════════════
@@ -1885,6 +1958,47 @@
     }
 
     // ════════════════════════════════════════
+    // 바코드 생성 헬퍼 (JsBarcode, Code128)
+    // ════════════════════════════════════════
+    function generateBarcodeSVG(id) {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      try {
+        JsBarcode(svg, id, {
+          format: 'CODE128',
+          width: 2,
+          height: 60,
+          displayValue: true,
+          fontSize: 12,
+          margin: 6,
+          background: '#ffffff',
+          lineColor: '#000000'
+        });
+      } catch (e) {
+        console.error('JsBarcode error:', e);
+      }
+      return svg;
+    }
+
+    function generateBarcodeDataUrl(id, width, height) {
+      var canvas = document.createElement('canvas');
+      try {
+        JsBarcode(canvas, id, {
+          format: 'CODE128',
+          width: width || 2,
+          height: height || 80,
+          displayValue: true,
+          fontSize: 13,
+          margin: 8,
+          background: '#ffffff',
+          lineColor: '#000000'
+        });
+      } catch (e) {
+        console.error('JsBarcode canvas error:', e);
+      }
+      return canvas.toDataURL('image/png');
+    }
+
+    // ════════════════════════════════════════
     // 어르신 목록
     // ════════════════════════════════════════
     async function loadSeniors() {
@@ -1905,6 +2019,7 @@
       btn.classList.add('on');
       renderSeniors();
     }
+
     function filterSeniorStat(stat, btn) {
       seniorStatF = stat;
       document.querySelectorAll('#seniorStatFilter .tgl').forEach(function (b) { b.classList.remove('on'); });
@@ -1926,6 +2041,7 @@
       }
       div.innerHTML = '<div class="s-grid">' + list.map(function (w) {
         var inactive = w.status === '비활성';
+        var barcodeDataUrl = generateBarcodeDataUrl(w.id);
         return '<div class="sc" style="' + (inactive ? 'opacity:.55;' : '') + '">'
           + '<div class="sc-top" style="' + (inactive ? 'background:#F5F5F5' : '') + '">'
           + '<span class="sc-id">' + w.id + '</span>'
@@ -1938,28 +2054,94 @@
           + '📚 ' + (w.subjects.length ? w.subjects.join(', ') : '없음') + '<br>'
           + (w.registeredAt ? '📅 ' + w.registeredAt : '')
           + '</div></div>'
-          + '<div class="sc-qr"><img src="' + w.qrCode + '" alt="QR" onerror="this.style.display=\'none\'">'
+          + '<div class="sc-qr">'
+          + '<img src="' + w.qrCode + '" alt="QR" class="qr-img" onerror="this.style.display=\'none\'">'
+          + '<div class="sc-barcode-preview">'
+          + '<img src="' + barcodeDataUrl + '" alt="바코드" style="max-width:100%;height:40px;object-fit:contain">'
+          + '</div>'
           + '<div class="sc-acts">'
-          + '<button class="btn btn-o btn-sm" onclick="showQR(\'' + w.id + '\',\'' + w.name + '\',\'' + w.qrCode + '\')">🔍 QR</button>'
+          + '<button class="btn btn-o btn-sm" onclick="showCodeModal(\'' + w.id + '\',\'' + w.name + '\',\'' + w.qrCode + '\')">📱 QR/바코드</button>'
           + '<button class="btn btn-o btn-sm" onclick="openEdit(\'' + w.id + '\')">✏️</button>'
           + '</div></div></div>';
       }).join('') + '</div>';
     }
 
     // ════════════════════════════════════════
-    // QR 모달
+    // QR / 바코드 모달
     // ════════════════════════════════════════
-    function showQR(id, name, url) {
-      qrInfo = { id, name, url };
+    function showCodeModal(id, name, qrUrl) {
+      qrInfo = { id, name, url: qrUrl };
+      barcodeInfo = { id, name };
+
+      // QR 패널
       document.getElementById('qrContent').innerHTML =
         '<p style="font-weight:900;font-size:16px;margin-bottom:6px">' + name + '</p>'
         + '<p class="txt-sm mb1">' + id + '</p>'
-        + '<img src="' + url + '" style="width:160px;height:160px;border-radius:8px">';
+        + '<img src="' + qrUrl + '" style="width:160px;height:160px;border-radius:8px">';
+
+      // 바코드 패널
+      var bcDiv = document.getElementById('barcodeContent');
+      bcDiv.innerHTML = '<p style="font-weight:900;font-size:16px;margin-bottom:6px">' + name + '</p>'
+        + '<p class="txt-sm mb1">' + id + '</p>';
+      var barcodeDataUrl = generateBarcodeDataUrl(id, 2, 80);
+      var bcImg = document.createElement('img');
+      bcImg.src = barcodeDataUrl;
+      bcImg.style.cssText = 'max-width:100%;border-radius:6px;border:1px solid #eee;padding:8px;background:#fff';
+      bcDiv.appendChild(bcImg);
+      var note = document.createElement('p');
+      note.className = 'txt-sm mt1';
+      note.textContent = 'Code 128 형식 · NLS-HR11 Plus 호환';
+      bcDiv.appendChild(note);
+
+      // 기본 탭: QR
+      switchModalTab('qr');
       document.getElementById('qrModal').classList.add('show');
     }
 
+    function switchModalTab(tab) {
+      document.getElementById('modalTabQR').classList.toggle('on', tab === 'qr');
+      document.getElementById('modalTabBC').classList.toggle('on', tab === 'barcode');
+      document.getElementById('modalPnlQR').classList.toggle('on', tab === 'qr');
+      document.getElementById('modalPnlBC').classList.toggle('on', tab === 'barcode');
+    }
+
+    // 하위 호환 (기존 showQR 호출 유지)
+    function showQR(id, name, url) {
+      showCodeModal(id, name, url);
+    }
+
+    function dlQR() {
+      if (!qrInfo) return;
+      var apiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=' + encodeURIComponent(qrInfo.id);
+      var img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0);
+        var a = document.createElement('a');
+        a.href = canvas.toDataURL('image/jpeg', 0.9);
+        a.download = 'QR_' + qrInfo.id + '_' + qrInfo.name + '.jpg';
+        a.click();
+      };
+      img.onerror = function () { window.open(apiUrl, '_blank'); };
+      img.src = apiUrl;
+    }
+
+    function dlBarcode() {
+      if (!barcodeInfo) return;
+      var dataUrl = generateBarcodeDataUrl(barcodeInfo.id, 3, 100);
+      var a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = 'Barcode_' + barcodeInfo.id + '_' + barcodeInfo.name + '.png';
+      a.click();
+    }
+
     // ════════════════════════════════════════
-    // QR 인쇄 (A4)
+    // QR 전체 인쇄 (기존)
     // ════════════════════════════════════════
     function printAllQR() {
       var list = allSeniors.filter(function (s) {
@@ -1967,7 +2149,6 @@
         var ok2 = seniorStatF === '전체' || s.status === seniorStatF;
         return ok1 && ok2;
       });
-
       if (!list.length) { alert('인쇄할 어르신이 없습니다.'); return; }
 
       var win = window.open('', '_blank');
@@ -1984,61 +2165,78 @@
         + '.hdr-info { font-size: 9pt; color: #666; }'
         + 'hr { border: 0; border-top: 1px solid #1b5e20; margin: 2mm 0 5mm 0; }'
         + '.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4mm 4mm; }'
-        + '.qc { border: 1px solid #eee; background: #fff; border-radius: 8px; padding: 5mm 3mm; text-align: center; page-break-inside: avoid !important; break-inside: avoid !important; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65mm; max-height: 65mm; height: 65mm; box-sizing: border-box; position: relative; }'
-        + '.qi { width: 45mm !important; height: 45mm !important; max-width: 45mm; max-height: 45mm; margin: 0 auto 3mm auto; display: block; border: 1px solid #f5f5f5; background: #fff; object-fit: contain; }'
-        + '.nm { font-size: 13pt; font-weight: 900; color: #000; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }'
-        + '@media print { '
-        + '  body { background: #fff; }'
-        + '  .qc { page-break-inside: avoid !important; break-inside: avoid !important; }'
-        + '  .qi { image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; }'
-        + '}'
+        + '.qc { border: 1px solid #eee; background: #fff; border-radius: 8px; padding: 5mm 3mm; text-align: center; page-break-inside: avoid !important; break-inside: avoid !important; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65mm; max-height: 65mm; height: 65mm; }'
+        + '.qi { width: 45mm !important; height: 45mm !important; margin: 0 auto 3mm auto; display: block; border: 1px solid #f5f5f5; }'
+        + '.nm { font-size: 13pt; font-weight: 900; color: #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }'
+        + '@media print { .qc { page-break-inside: avoid !important; break-inside: avoid !important; } }'
         + '</style></head><body>'
-        + '<div class="hdr">'
-        + '<div class="hdr-title">🎓 노인대학 출석 QR코드</div>'
-        + '<div class="hdr-info">' + dateStr + ' | 총 ' + list.length + '명</div>'
-        + '</div><hr>'
+        + '<div class="hdr"><div class="hdr-title">🎓 청춘캠퍼스 출석 QR코드</div>'
+        + '<div class="hdr-info">' + dateStr + ' | 총 ' + list.length + '명</div></div><hr>'
         + '<div class="grid">'
         + list.map(function (s) {
-          var safeName = String(s.name).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-          return '<div class="qc">'
-            + '<img src="' + s.qrCode + '" class="qi" alt="QR">'
-            + '<div class="nm">' + safeName + '</div>'
-            + '</div>';
+          var safeName = String(s.name).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return '<div class="qc"><img src="' + s.qrCode + '" class="qi" alt="QR">'
+            + '<div class="nm">' + safeName + '</div></div>';
         }).join('')
         + '</div><script>window.onload=function(){setTimeout(function(){window.print();},500);};<\/script></body></html>';
 
       win.document.write(html);
       win.document.close();
     }
-    function dlQR() {
-      if (!qrInfo) return;
-      var apiOuter = 'https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=' + encodeURIComponent(qrInfo.id);
 
-      var img = new Image();
-      img.crossOrigin = 'Anonymous';
-      img.onload = function () {
-        var canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        var ctx = canvas.getContext('2d');
-        // JPG는 투명도를 지원하지 않으므로 배경을 흰색으로 채움
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
+    // ════════════════════════════════════════
+    // 바코드 전체 인쇄 (신규)
+    // ════════════════════════════════════════
+    function printAllBarcode() {
+      var list = allSeniors.filter(function (s) {
+        var ok1 = seniorSubjF === '전체' || s.subjects.indexOf(seniorSubjF) >= 0;
+        var ok2 = seniorStatF === '전체' || s.status === seniorStatF;
+        return ok1 && ok2;
+      });
+      if (!list.length) { alert('인쇄할 어르신이 없습니다.'); return; }
 
-        var dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        var a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = 'QR_' + qrInfo.id + '_' + qrInfo.name + '.jpg';
-        a.click();
-      };
-      img.onerror = function () {
-        // 캔버스 변환 실패 시 원본 링크 오픈 (fallback)
-        window.open(apiOuter, '_blank');
-      };
-      img.src = apiOuter;
+      var win = window.open('', '_blank');
+      var now = new Date();
+      var dateStr = now.getFullYear() + '. ' + (now.getMonth() + 1) + '. ' + now.getDate() + '.';
+
+      // 바코드 이미지를 data URL로 생성
+      var barcodeImages = list.map(function (s) {
+        return generateBarcodeDataUrl(s.id, 2, 70);
+      });
+
+      var html = '<html><head><meta charset="UTF-8"><title>어르신 바코드 인쇄</title>'
+        + '<style>'
+        + '@page { size: A4 portrait; margin: 10mm 10mm; }'
+        + '* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }'
+        + 'body { font-family: "Noto Sans KR", -apple-system, "Malgun Gothic", sans-serif; color: #333; background: #fff; }'
+        + '.hdr { text-align: center; margin-bottom: 5mm; }'
+        + '.hdr-title { font-size: 13pt; font-weight: bold; margin-bottom: 1mm; }'
+        + '.hdr-info { font-size: 9pt; color: #666; }'
+        + 'hr { border: 0; border-top: 1px solid #6A1B9A; margin: 2mm 0 5mm 0; }'
+        + '.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5mm 6mm; }'
+        + '.bc { border: 1px solid #e0e0e0; background: #fff; border-radius: 6px; padding: 4mm 4mm 3mm; text-align: center; page-break-inside: avoid !important; break-inside: avoid !important; }'
+        + '.bc-img { width: 100%; max-height: 22mm; object-fit: contain; display: block; margin-bottom: 2mm; }'
+        + '.bc-name { font-size: 12pt; font-weight: 900; color: #000; }'
+        + '.bc-id { font-size: 8pt; color: #666; margin-top: 1mm; }'
+        + '@media print { .bc { page-break-inside: avoid !important; } }'
+        + '</style></head><body>'
+        + '<div class="hdr"><div class="hdr-title">🔍 청춘캠퍼스 출석 바코드 (Code 128)</div>'
+        + '<div class="hdr-info">' + dateStr + ' | 총 ' + list.length + '명 | NLS-HR11 Plus 호환</div></div><hr>'
+        + '<div class="grid">'
+        + list.map(function (s, i) {
+          var safeName = String(s.name).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          var safeId = String(s.id).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return '<div class="bc">'
+            + '<img src="' + barcodeImages[i] + '" class="bc-img" alt="바코드">'
+            + '<div class="bc-name">' + safeName + '</div>'
+            + '<div class="bc-id">' + safeId + '</div>'
+            + '</div>';
+        }).join('')
+        + '</div><script>window.onload=function(){setTimeout(function(){window.print();},600);};<\/script></body></html>';
+
+      win.document.write(html);
+      win.document.close();
     }
-
 
     // ════════════════════════════════════════
     // 어르신 등록
@@ -2089,7 +2287,9 @@
       document.getElementById('fileDrop').classList.remove('drag');
       if (e.dataTransfer.files[0]) processExcel(e.dataTransfer.files[0]);
     }
+
     function handleBatch(e) { if (e.target.files[0]) processExcel(e.target.files[0]); }
+
     function processExcel(file) {
       var reader = new FileReader();
       reader.onload = function (ev) {
@@ -2110,6 +2310,7 @@
       };
       reader.readAsArrayBuffer(file);
     }
+
     function showBatchPreview() {
       var div = document.getElementById('batchPreview');
       var btn = document.getElementById('batchBtn');
@@ -2125,6 +2326,7 @@
       div.classList.remove('hidden');
       btn.classList.remove('hidden');
     }
+
     async function submitBatch() {
       if (!batchData.length) return;
       if (!confirm(batchData.length + '명을 일괄 등록하시겠습니까?')) return;
