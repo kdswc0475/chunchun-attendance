@@ -1210,7 +1210,9 @@
     <div id="tab-seniors" class="tab">
       <div class="card">
         <div class="card-ttl">👥 어르신 목록
-          <button class="btn btn-o btn-sm" onclick="printAllQR()" style="margin-left:auto">🖨️ QR 인쇄 (A4)</button>
+          <div style="margin-left:auto;display:flex;gap:4px">
+            <button class="btn btn-o btn-sm" onclick="printAllQR()">🖨️ QR 인쇄</button>
+          </div>
           <span class="bdg bdg-g" id="seniorCount">0명</span>
         </div>
         <div class="tgl-grp mb1" id="seniorSubjFilter">
@@ -1431,7 +1433,7 @@
       </div>
       <div id="qrContent"></div>
       <div class="btn-row mt2">
-        <button class="btn btn-b" onclick="dlQR()">📥 저장</button>
+        <button class="btn btn-b" onclick="dlQR()">📥 QR 저장</button>
         <button class="btn btn-o" onclick="closeModal('qrModal')">닫기</button>
       </div>
     </div>
@@ -1565,6 +1567,7 @@
       } catch (e) {
         console.error('init error:', e);
       }
+
     }
 
     // ════════════════════════════════════════
@@ -1996,9 +1999,10 @@
         + '</div><hr>'
         + '<div class="grid">'
         + list.map(function (s) {
+          var safeName = String(s.name).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
           return '<div class="qc">'
             + '<img src="' + s.qrCode + '" class="qi" alt="QR">'
-            + '<div class="nm">' + s.name + '</div>'
+            + '<div class="nm">' + safeName + '</div>'
             + '</div>';
         }).join('')
         + '</div><script>window.onload=function(){setTimeout(function(){window.print();},500);};<\/script></body></html>';
@@ -2034,6 +2038,7 @@
       };
       img.src = apiOuter;
     }
+
 
     // ════════════════════════════════════════
     // 어르신 등록
@@ -2262,8 +2267,7 @@
           div.innerHTML = '<div class="empty"><div class="empty-ico">📋</div>기록 없음</div>';
           return;
         }
-        div.innerHTML = '<div class="tbl-wrap"><table><thead><tr>'
-          + '<th>날짜</th><th>시간</th><th>이름</th><th>과목</th></tr></thead><tbody>'
+        div.innerHTML = '<div class="tbl-wrap"><table><thead><tr><th>날짜</th><th>시간</th><th>이름</th><th>과목</th></tr></thead><tbody>'
           + r.data.map(function (x) {
             return '<tr><td>' + x.date + '</td><td>' + x.time + '</td>'
               + '<td>' + x.seniorName + '<br><span class="txt-sm">' + x.seniorId + '</span></td>'
@@ -2297,8 +2301,7 @@
           return;
         }
         document.getElementById('statsBody').innerHTML =
-          '<div class="tbl-wrap"><table><thead><tr>'
-          + '<th>과목</th><th>요일</th><th>수업일</th><th>출석인원</th></tr></thead><tbody>'
+          '<div class="tbl-wrap"><table><thead><tr><th>과목</th><th>요일</th><th>수업일</th><th>출석인원</th></tr></thead><tbody>'
           + r.data.map(function (s) {
             return '<tr><td style="font-size:11px">' + s.subjectName + '</td>'
               + '<td style="font-size:11px">' + s.day + '</td>'
